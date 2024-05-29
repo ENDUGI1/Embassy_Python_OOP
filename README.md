@@ -9,3 +9,4 @@
 1. ppt
 2. laporan
 3. code
+4. buat vidio durasi 5 menitan
