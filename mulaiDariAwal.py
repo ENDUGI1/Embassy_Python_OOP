@@ -75,10 +75,10 @@ def credit():
     print("""==========================================================""")
     print("""|                                                        |""")
     print("""|                                                        |""")
-    print("""|                      Credits:                           |""")
+    print("""|                      Credits:                          |""")
     print("""|                                                        |""")
     print("""|   AI Assistant provided by OpenAI's GPT-3 technology.  |""")
-    print("""|   Developed by [Your Name].                             |""")
+    print("""|   Developed by [Your Name].                            |""")
     print("""|                                                        |""")
     print("""==========================================================""")
     delay(2.5)
@@ -137,7 +137,7 @@ def user_menu(user):
         print("||       [1] MANAJEMEN LAPORAN                          ||")
         print("||       [2] CEK NOTIFIKASI                             ||")
         print("||       [3] PENGUMUMAN                                 ||")
-        print("||       [4] KONTAK KEDUTAAN                             ||")
+        print("||       [4] KONTAK KEDUTAAN                            ||")
         print("||       [5] LOG OUT                                    ||")
         print("||                                                      ||")
         print("==========================================================")
@@ -172,6 +172,7 @@ def admin_menu():
         if menu == "1":
             pass  # Tambahkan fungsi untuk manajemen pengumuman
         elif menu == "2":
+            lihat_laporan()
             pass  # Tambahkan fungsi untuk tinjau laporan
         elif menu == "3":
             pass  # Tambahkan fungsi untuk menampilkan data PMI
