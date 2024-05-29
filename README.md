@@ -5,3 +5,7 @@
 3. Rifai Ananda
 4. Fasdatullah
 5. Hesti Pratiwi
+## yang harus di kumpul (ke google drive (kasih link))
+1. ppt
+2. laporan
+3. code
