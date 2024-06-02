@@ -235,5 +235,24 @@ def hapus_laporan():
             print("Nomor laporan tidak valid.")
     input("Tekan 'Enter' untuk kembali ke menu.")
 
+def cek_pengumuman():
+    clear_screen()
+    print("== Cek Pengumuman ==")
+    if not pengumuman:
+        print("Belum ada pengumuman.")
+    else:
+        for i, announcements in enumerate(announcements, start=1):
+            print(f"{i}. {announcements}")
+    input("Tekan 'Enter' untuk kembali ke menu.")
+    
+def cek_notifikasi():
+    clear_screen()
+    print("== Cek Notifikasi ==")
+    if not notifikasi:
+        print("Belum ada notifikasi.")
+    else:
+        for i, laporan in enumerate(laporan, start=1):
+            print(f"{i}. {laporan}")
+    input("Tekan 'Enter' untuk kembali ke menu.")
 
 heading()
