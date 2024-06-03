@@ -1,258 +1,587 @@
 import os
 import time
 import pwinput
+from tabulate import tabulate
 
-# Fungsi untuk membersihkan layar
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-# Fungsi untuk memberikan jeda
 def delay(seconds):
     time.sleep(seconds)
 
-# Data storage
-users = []
-reports = []
-announcements = []
+class User:
+    users = []
 
-# Fungsi untuk menampilkan heading
-def heading():
-    clear_screen()
-    print("+=========================================================+")
-    print("||                                                        ||")
-    print("||                   SELAMAT DATANG                       ||")
-    print("||          SAFE MIGRANT: Sistem Pengaduan & Bantuan      ||")
-    print("||       Perlindungan Pekerja Migran Indonesia            ||")
-    print("||                                                        ||")
-    print("+=========================================================+")
-    delay(2.5)
-    clear_screen()
-    menu_utama()
+    def __init__(self, name, phone, nik, passport, password, country):
+        self.name = name
+        self.phone = phone
+        self.nik = nik
+        self.passport = passport
+        self.password = password
+        self.country = country
+        User.users.append(self)
 
-# Fungsi untuk keluar dari aplikasi
-def keluar_app():
-    clear_screen()
-    print("""==========================================================""")
-    print("""|                                                        |""")
-    print("""|                                                        |""")
-    print("""|          TERIMA KASIH SUDAH MEMAKAI LAYANAN KAMI       |""")
-    print("""|          JANGAN LUPA AGAR SELALU JAGA KESEHATAN!       |""")
-    print("""|                                                        |""")
-    print("""|                                                        |""")
-    print("""==========================================================""")
-    delay(2.5)
-    clear_screen()
-    credit()
-    exit()
+    @classmethod
+    def find_user(cls, nik, password):
+        for user in cls.users:
+            if user.nik == nik and user.password == password:
+                return user
+        return None
 
-# Fungsi untuk menampilkan menu utama
-def menu_utama():
-    while True:
+class Admin(User):
+    def __init__(self):
+        super().__init__('admin', 'admin', 'admin', 'admin', 'admin', 'admin')
+
+class Laporan:
+    reports = []
+
+    def __init__(self, deskripsi, user):
+        self.deskripsi = deskripsi
+        self.user = user
+        self.status = "Belum Ditindaklanjuti"
+        Laporan.reports.append(self)
+
+    @classmethod
+    def user_reports(cls, user):
+        return [laporan for laporan in cls.reports if laporan.user == user]
+
+class Pengumuman:
+    announcements = []
+
+    def __init__(self, title, description):
+        self.title = title
+        self.description = description
+        self.date = time.strftime("%Y-%m-%d %H:%M:%S")
+        Pengumuman.announcements.append(self)
+
+    @classmethod
+    def find_announcement(cls, title):
+        for announcement in cls.announcements:
+            if announcement.title == title:
+                return announcement
+        return None
+
+class Notification:
+    notifications = []
+
+    def __init__(self, user, message):
+        self.user = user
+        self.message = message
+        self.timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        Notification.notifications.append(self)
+
+    @classmethod
+    def user_notifications(cls, user):
+        return [notif for notif in cls.notifications if notif.user == user]
+
+class App:
+    def __init__(self):
+        self.admin = Admin()
+
+    def start(self):
+        self.heading()
+
+    def heading(self):
         clear_screen()
         print("============================================================")
-        print("||                  M E N U    U T A M A                  ||")
-        print("============================================================")
         print("||                                                        ||")
-        print("||       [1] REGISTER                                     ||")
-        print("||       [2] LOGIN                                        ||")
-        print("||       [3] EXIT                                         ||")
+        print("||                   SELAMAT DATANG                       ||")
+        print("||            SISTEM PENGADUAN & BANTUAN                  ||")
+        print("||       PERLINDUNGAN PEKERJA MIGRAN INDONESIA            ||")
         print("||                                                        ||")
         print("============================================================")
-        menu = input("Masukkan Pilihan : ")
-        if menu == "1":
-            register()
-        elif menu == "2":
-            login()
-        elif menu == "3":
-            keluar_app()
+        delay(2.5)
+        clear_screen()
+        self.menu_utama()
+
+    def menu_utama(self):
+        while True:
+            clear_screen()
+            print("============================================================")
+            print("||                  M E N U    U T A M A                  ||")
+            print("============================================================")
+            print("||                                                        ||")
+            print("||       [1] REGISTER                                     ||")
+            print("||       [2] LOGIN                                        ||")
+            print("||       [3] EXIT                                         ||")
+            print("||                                                        ||")
+            print("============================================================")
+            menu = input("Masukkan Pilihan : ")
+            if menu == "1":
+                self.register()
+            elif menu == "2":
+                self.login()
+            elif menu == "3":
+                self.keluar_app()
+            else:
+                print("Pilihan tidak ada")
+                delay(1.5)
+
+    def keluar_app(self):
+        clear_screen()
+        print("""==========================================================""")
+        print("""|                                                        |""")
+        print("""|          TERIMA KASIH SUDAH MEMAKAI LAYANAN KAMI       |""")
+        print("""|          JANGAN LUPA AGAR SELALU JAGA KESEHATAN!       |""")
+        print("""|                                                        |""")
+        print("""==========================================================""")
+        delay(2.5)
+        clear_screen()
+        self.credit()
+        exit()
+
+    def credit(self):
+        clear_screen()
+        print("""==========================================================""")
+        print("""|                                                        |""")
+        print("""==========================================================""")
+        delay(2.5)
+
+    def register(self):
+        clear_screen()
+        print("==========================================================")
+        print("||                     REGISTER                          ||")
+        print("==========================================================")
+        name = input("Nama: ")
+        while True:
+            phone = input("No Telpon: ")
+            nik = input("NIK: ")
+            try:
+                int(phone)
+                int(nik)
+                break
+            except ValueError:
+                print("Harus Berupa angka!")
+                continue
+        passport = input("No Passport: ")
+        password = pwinput.pwinput(prompt='Password: ', mask='*')
+        country = input("Negara Saat Ini: ")
+
+        if any(u for u in User.users if u.nik == nik or u.passport == passport):
+            print("NIK atau Passport sudah terdaftar!")
+            delay(2)
         else:
-            print("Pilihan tidak ada")  #error handling maszeh
-            delay(1.5)
-            
-# Fungsi untuk menampilkan kredit
-def credit():
-    clear_screen()
-    print("""==========================================================""")
-    print("""|                                                        |""")
-    print("""|                                                        |""")
-    print("""|                                                        |""")
-    print("""|                                                        |""")
-    print("""|                                                        |""")
-    print("""|                                                        |""")
-    print("""|                                                        |""")
-    print("""==========================================================""")
-    delay(2.5)
+            User(name, phone, nik, passport, password, country)
+            print("Registrasi berhasil! Silakan login.")
+            delay(2)
 
-# Fungsi untuk register
-def register():
-    clear_screen()
-    print("== Register ==")
-    name = input("Nama: ")
-    phone = input("No Telpon: ")
-    nik = input("NIK: ")
-    passport = input("No Passport: ")
-    password = pwinput.pwinput(prompt='Password: ', mask='*')
-    country = input("Negara: ")
+    def login(self):
+        clear_screen()
+        print("==========================================================")
+        print("||                        LOGIN                          ||")
+        print("==========================================================")
+        nik = input("NIK: ")
+        password = pwinput.pwinput(prompt='Password: ', mask='*')
+        
+        if nik == 'admin' and password == 'admin':
+            self.admin_menu()
+        else:
+            user = User.find_user(nik, password)
+            if user:
+                self.user_menu(user)
+            else:
+                print("Login gagal! Periksa NIK dan Password.")
+                delay(2)
 
-    if any(u for u in users if u['nik'] == nik or u['passport'] == passport):
-        print("NIK atau Passport sudah terdaftar!")
+    def user_menu(self, user):
+        while True:
+            clear_screen()
+            print("==========================================================")
+            print("||                  M E N U    U S E R                  ||")
+            print("==========================================================")
+            print("||                                                      ||")
+            print("||       [1] MANAJEMEN LAPORAN                          ||")
+            print("||       [2] CEK NOTIFIKASI                             ||")
+            print("||       [3] PENGUMUMAN                                 ||")
+            print("||       [4] KONTAK KEDUTAAN                            ||")
+            print("||       [5] LOG OUT                                    ||")
+            print("||                                                      ||")
+            print("==========================================================")
+            menu = input("Masukkan Pilihan : ")
+            if menu == "1":
+                self.manajemen_laporan(user)
+            elif menu == "2":
+                self.cek_notifikasi(user)
+            elif menu == "3":
+                self.tampilkan_pengumuman_user()
+            elif menu == "4":
+                self.kontak_kedutaan(user)
+            elif menu == "5":
+                break
+
+    def manajemen_laporan(self, user):
+        while True:
+            clear_screen()
+            print("===========================================================")
+            print("||               MANAJEMEN LAPORAN                       ||")
+            print("===========================================================")
+            print("|| [1] Buat Laporan                                      ||")
+            print("|| [2] Lihat Laporan                                     ||")
+            print("|| [3] Ubah Laporan                                      ||")
+            print("|| [4] Hapus Laporan                                     ||")
+            print("|| [5] Kembali                                           ||")
+            print("===========================================================")
+            pilihan = input("Masukkan Pilihan: ")
+            if pilihan == "1":
+                self.buat_laporan(user)
+            elif pilihan == "2":
+                self.lihat_laporan(user)
+            elif pilihan == "3":
+                self.edit_laporan(user)
+            elif pilihan == "4":
+                self.hapus_laporan(user)
+            elif pilihan == "5":
+                break
+            else:
+                print("Pilihan tidak valid.")
+                delay(1.5)
+
+    def buat_laporan(self, user):
+        clear_screen()
+        print("==========================================================")
+        print("||                 BUAT LAPORAN                          ||")
+        print("==========================================================")
+        deskripsi = input("Masukkan deskripsi laporan: ")
+        Laporan(deskripsi, user)
+        print("----------------------------------------------------------")
+        print("Laporan berhasil dibuat!")
+        print("==========================================================")
         delay(2)
-    else:
-        user = {
-            'id': len(users) + 1,
-            'name': name,
-            'phone': phone,
-            'nik': nik,
-            'passport': passport,
-            'password': password,
-            'country': country
+
+    def lihat_laporan(self, user):
+        clear_screen()
+        print("==========================================================")
+        print("||                LIHAT LAPORAN                         ||")
+        print("==========================================================")
+        user_reports = Laporan.user_reports(user)
+        if not user_reports:
+            print("Anda belum memiliki laporan.")
+        else:
+            table = [[i, laporan.deskripsi, laporan.status] for i, laporan in enumerate(user_reports, start=1)]
+            print(tabulate(table, headers=["No", "Deskripsi", "Status"], tablefmt="grid"))
+        input("Tekan 'Enter' untuk kembali ke menu.")
+
+    def edit_laporan(self, user):
+        clear_screen()
+        print("==========================================================")
+        print("||                UBAH LAPORAN                           ||")
+        print("==========================================================")
+        user_reports = Laporan.user_reports(user)
+        if not user_reports:
+            print("Anda belum memiliki laporan.")
+            delay(2)
+            return
+        table = [[i, laporan.deskripsi, laporan.status] for i, laporan in enumerate(user_reports, start=1)]
+        print(tabulate(table, headers=["No", "Deskripsi", "Status"], tablefmt="grid"))
+        print("----------------------------------------------------------")
+        while True:
+            nomor = input("Masukkan nomor laporan yang ingin diubah: ")
+            try:
+                nomorBaru = int(nomor) - 1
+                break
+            except ValueError:
+                print("Harus Berupa angka!")
+                continue
+        if 0 <= nomorBaru < len(user_reports):
+            laporan = user_reports[nomorBaru]
+            if laporan.status != "Belum Ditindaklanjuti":
+                print("Laporan sudah ditindaklanjuti dan tidak bisa diubah.")
+                delay(2)
+                return
+            deskripsi_baru = input("Masukkan deskripsi baru: ")
+            laporan.deskripsi = deskripsi_baru
+            print("Laporan berhasil diubah.")
+        else:
+            print("Nomor laporan tidak valid.")
+        delay(2)
+
+    def hapus_laporan(self, user):
+        clear_screen()
+        print("==========================================================")
+        print("||                HAPUS LAPORAN                          ||")
+        print("==========================================================")
+        user_reports = Laporan.user_reports(user)
+        if not user_reports:
+            print("Anda belum memiliki laporan.")
+            delay(2)
+            return
+        table = [[i, laporan.deskripsi, laporan.status] for i, laporan in enumerate(user_reports, start=1)]
+        print(tabulate(table, headers=["No", "Deskripsi", "Status"], tablefmt="grid"))
+        print("----------------------------------------------------------")
+        while True:
+            nomor = input("Masukkan nomor laporan yang ingin dihapus: ")
+            try:
+                nomorBaru = int(nomor) - 1
+                break
+            except ValueError:
+                print("Harus Berupa angka!")
+                continue
+        if 0 <= nomorBaru < len(user_reports):
+            laporan = user_reports[nomorBaru]
+            if laporan.status != "Belum Ditindaklanjuti":
+                print("Laporan sudah ditindaklanjuti dan tidak bisa dihapus.")
+                delay(2)
+                return
+            Laporan.reports.remove(laporan)
+            print("Laporan berhasil dihapus.")
+        else:
+            print("Nomor laporan tidak valid.")
+        delay(2)
+
+    def cek_notifikasi(self, user):
+        clear_screen()
+        print("==========================================================")
+        print("||                   NOTIFIKASI                          ||")
+        print("==========================================================")
+        user_notifications = Notification.user_notifications(user)
+        if not user_notifications:
+            print("Anda belum memiliki notifikasi.")
+        else:
+            table = [[notif.timestamp, notif.message] for notif in user_notifications]
+            print(tabulate(table, headers=["Waktu", "Pesan"], tablefmt="grid"))
+        input("Tekan 'Enter' untuk kembali ke menu.")
+
+    def tampilkan_pengumuman_user(self):
+        clear_screen()
+        print("==========================================================")
+        print("||                  PENGUMUMAN                           ||")
+        print("==========================================================")
+        if not Pengumuman.announcements:
+            print("Belum ada pengumuman.")
+        else:
+            table = [[i, pengumuman.title, pengumuman.description, pengumuman.date] for i, pengumuman in enumerate(Pengumuman.announcements, start=1)]
+            print(tabulate(table, headers=["No", "Judul", "Deskripsi", "Tanggal"], tablefmt="grid"))
+        input("Tekan 'Enter' untuk kembali ke menu.")
+
+    def kontak_kedutaan(self, user):
+        clear_screen()
+        print("==========================================================")
+        print("||                  KONTAK KEDUTAAN                      ||")
+        print("==========================================================")
+        country = user.country.lower()
+        kedutaan = {
+            'indonesia': {
+                'alamat': 'Jl. Merdeka No. 1, Jakarta, Indonesia',
+                'email': 'contact@indonesia-embassy.com',
+                'phone': '+62 21 12345678'
+            },
+            'singapore': {
+                'alamat': '7 Chatsworth Road, Singapore',
+                'email': 'contact@indonesianembassy.sg',
+                'phone': '+65 6737 7422'
+            }
+            # Add more countries as needed
         }
-        users.append(user)
-        print("Registrasi berhasil! Silakan login.")
-        delay(2)
+        info = kedutaan.get(country, None)
+        if info:
+            print(f"Negara: {user.country}")
+            print(f"Alamat: {info['alamat']}")
+            print(f"Email: {info['email']}")
+            print(f"Nomor Telepon: {info['phone']}")
+        else:
+            print(f"Informasi kedutaan untuk negara {user.country} tidak tersedia.")
+        input("Tekan 'Enter' untuk kembali ke menu.")
 
-# Fungsi untuk login
-def login():
-    clear_screen()
-    print("== Login ==")
-    nik = input("NIK: ")
-    password = pwinput.pwinput(prompt='Password: ', mask='*')
-    user = next((u for u in users if u['nik'] == nik and u['password'] == password), None)
-    if user:
-        user_menu(user)
-    elif nik == 'admin' and password == 'admin':
-        admin_menu()
-    else:
-        print("Login gagal! Periksa NIK dan Password.")
-        delay(2)
-
-# Fungsi untuk menu user
-def user_menu(user):
-    while True:
+    def hubungi_user(self):
         clear_screen()
         print("==========================================================")
-        print("||                  M E N U    U S E R                  ||")
+        print("||                   HUBUNGI USER                       ||")
         print("==========================================================")
-        print("||                                                      ||")
-        print("||       [1] MANAJEMEN LAPORAN                          ||")
-        print("||       [2] CEK NOTIFIKASI                             ||")
-        print("||       [3] PENGUMUMAN                                 ||")
-        print("||       [4] KONTAK KEDUTAAN                            ||")
-        print("||       [5] LOG OUT                                    ||")
-        print("||                                                      ||")
-        print("==========================================================")
-        menu = input("Masukkan Pilihan : ")
-        if menu == "1":
-            buat_laporan()
-        elif menu == "2":
-            pass  # Tambahkan fungsi untuk cek notifikasi
-        elif menu == "3":
-            pass  # Tambahkan fungsi untuk melihat pengumuman
-        elif menu == "4":
-            pass  # Tambahkan fungsi untuk kontak kedutaan
-        elif menu == "5":
-            break
+        self.lihat_semua_laporan()
+        
+        while True:
+            nama = input("Masukkan nama user yang ingin dihubungi (atau 'batal' untuk membatalkan): ").strip()
+            if nama.lower() == 'batal':
+                print("Operasi dibatalkan.")
+                delay(2)
+                return
+            
+            user = next((user for user in User.users if user.name == nama), None)
+            
+            if user:
+                pesan = input("Masukkan pesan yang ingin dikirim: ").strip()
+                Notification(user, pesan)
+                print("Pesan berhasil dikirim!")
+                delay(2)
+                return
+            else:
+                print("Nama user tidak valid. Silakan coba lagi.")
+                delay(1)
 
-# Fungsi untuk menu admin
-def admin_menu():
-    while True:
+    def admin_menu(self):
+        while True:
+            clear_screen()
+            print("==========================================================")
+            print("||                  M E N U    A D M I N                ||")
+            print("==========================================================")
+            print("||                                                      ||")
+            print("||       [1] LIHAT SEMUA LAPORAN                        ||")
+            print("||       [2] TINDAK LANJUTI LAPORAN                     ||")
+            print("||       [3] MANAJEMEN PENGUMUMAN                       ||")
+            print("||       [4] HUBUNGI USER                               ||")
+            print("||       [5] LOG OUT                                    ||")
+            print("||                                                      ||")
+            print("==========================================================")
+            menu = input("Masukkan Pilihan : ")
+            if menu == "1":
+                self.lihat_semua_laporan()
+                input("Tekan 'Enter' untuk kembali ke menu.")
+            elif menu == "2":
+                self.tindak_lanjuti_laporan()
+            elif menu == "3":
+                self.manajemen_pengumuman()
+            elif menu == "4":
+                self.hubungi_user()
+            elif menu == "5":
+                break
+
+    def lihat_semua_laporan(self):
         clear_screen()
         print("==========================================================")
-        print("||                  M E N U    A D M I N                ||")
+        print("||                SEMUA LAPORAN                         ||")
         print("==========================================================")
-        print("||                                                      ||")
-        print("||       [1] MANAJEMEN PENGUMUMAN                       ||")
-        print("||       [2] TINJAU LAPORAN                             ||")
-        print("||       [3] TAMPILKAN DATA PMI                         ||")
-        print("||       [4] HUBUNGI PMI                                ||")
-        print("||       [5] LOG OUT                                    ||")
-        print("||                                                      ||")
+        if not Laporan.reports:
+            print("Belum ada laporan.")
+        else:
+            table = [[i, laporan.deskripsi, laporan.status, laporan.user.name] for i, laporan in enumerate(Laporan.reports, start=1)]
+            print(tabulate(table, headers=["No", "Deskripsi", "Status", "User"], tablefmt="grid"))
+
+    def tindak_lanjuti_laporan(self):
+        clear_screen()
         print("==========================================================")
-        menu = input("Masukkan Pilihan : ")
-        if menu == "1":
-            pass  # Tambahkan fungsi untuk manajemen pengumuman
-        elif menu == "2":
-            lihat_laporan()
-            pass  # Tambahkan fungsi untuk tinjau laporan
-        elif menu == "3":
-            pass  # Tambahkan fungsi untuk menampilkan data PMI
-        elif menu == "4":
-            pass  # Tambahkan fungsi untuk menghubungi PMI
-        elif menu == "5":
-            break
-
-# Fungsi untuk membuat laporan
-def buat_laporan():
-    clear_screen()
-    print("== Buat Laporan ==")
-    deskripsi = input("Masukkan deskripsi laporan: ")
-    reports.append(deskripsi)
-    print("Laporan berhasil dibuat!")
-    delay(2)
-
-#
-def lihat_laporan():
-    clear_screen()
-    print("== Lihat Laporan ==")
-    if not reports:
-        print("Belum ada laporan.")
-    else:
-        for i, laporan in enumerate(reports, start=1):
-            print(f"{i}. {laporan}")
-    input("Tekan 'Enter' untuk kembali ke menu.")
-
-def edit_laporan():
-    clear_screen()
-    print("== Edit Laporan ==")
-    if not reports:
-        print("Belum ada laporan.")
-    else:
-        for i, laporan in enumerate(reports, start=1):
-            print(f"{i}. {laporan}")
-        nomor_laporan = int(input("Pilih nomor laporan yang ingin diubah: "))
-        if 1 <= nomor_laporan <= len(reports):
-            deskripsi_baru = input("Masukkan deskripsi laporan yang baru: ")
-            reports[nomor_laporan - 1] = deskripsi_baru
-            print("Laporan berhasil diubah!")
+        print("||              TINDAK LANJUTI LAPORAN                  ||")
+        print("==========================================================")
+        if not Laporan.reports:
+            print("Belum ada laporan.")
+            delay(2)
+            return
+        table = [[i, laporan.deskripsi, laporan.status, laporan.user.name] for i, laporan in enumerate(Laporan.reports, start=1)]
+        print(tabulate(table, headers=["No", "Deskripsi", "Status", "User"], tablefmt="grid"))
+        print("----------------------------------------------------------")
+        while True:
+            nomor = input("Masukkan nomor laporan yang ingin ditindaklanjuti: ")
+            try:
+                nomorBaru = int(nomor) - 1
+                break
+            except ValueError:
+                print("Harus Berupa angka!")
+                continue
+        if 0 <= nomorBaru < len(Laporan.reports):
+            laporan = Laporan.reports[nomorBaru]
+            laporan.status = "Sudah Ditindaklanjuti"
+            print("Laporan berhasil ditindaklanjuti.")
         else:
             print("Nomor laporan tidak valid.")
-    input("Tekan 'Enter' untuk kembali ke menu.")
+        delay(2)
 
+    def manajemen_pengumuman(self):
+        while True:
+            clear_screen()
+            print("==========================================================")
+            print("||               MANAJEMEN PENGUMUMAN                   ||")
+            print("==========================================================")
+            print("|| [1] Buat Pengumuman                                  ||")
+            print("|| [2] Lihat Pengumuman                                 ||")
+            print("|| [3] Ubah Pengumuman                                  ||")
+            print("|| [4] Hapus Pengumuman                                 ||")
+            print("|| [5] Kembali                                          ||")
+            print("==========================================================")
+            pilihan = input("Masukkan Pilihan: ")
+            if pilihan == "1":
+                self.buat_pengumuman()
+            elif pilihan == "2":
+                self.lihat_pengumuman()
+            elif pilihan == "3":
+                self.ubah_pengumuman()
+            elif pilihan == "4":
+                self.hapus_pengumuman()
+            elif pilihan == "5":
+                break
+            else:
+                print("Pilihan tidak valid.")
+                delay(1.5)
 
-def hapus_laporan():
-    clear_screen()
-    print("== Hapus Laporan ==")
-    if not reports:
-        print("Belum ada laporan.")
-    else:
-        for i, laporan in enumerate(reports, start=1):
-            print(f"{i}. {laporan}")
-        nomor_laporan = int(input("Pilih nomor laporan yang ingin dihapus: "))
-        if 1 <= nomor_laporan <= len(reports):
-            del reports[nomor_laporan - 1]
-            print("Laporan berhasil dihapus!")
+    def buat_pengumuman(self):
+        clear_screen()
+        print("==========================================================")
+        print("||                 BUAT PENGUMUMAN                      ||")
+        print("==========================================================")
+        title = input("Masukkan judul pengumuman: ")
+        description = input("Masukkan deskripsi pengumuman: ")
+        Pengumuman(title, description)
+        print("Pengumuman berhasil dibuat.")
+        delay(2)
+
+    def lihat_pengumuman(self):
+        clear_screen()
+        print("==========================================================")
+        print("||                 LIHAT PENGUMUMAN                     ||")
+        print("==========================================================")
+        if not Pengumuman.announcements:
+            print("Belum ada pengumuman.")
         else:
-            print("Nomor laporan tidak valid.")
-    input("Tekan 'Enter' untuk kembali ke menu.")
+            table = [[i, pengumuman.title, pengumuman.description, pengumuman.date] for i, pengumuman in enumerate(Pengumuman.announcements, start=1)]
+            print(tabulate(table, headers=["No", "Judul", "Deskripsi", "Tanggal"], tablefmt="grid"))
+        input("Tekan 'Enter' untuk kembali ke menu.")
 
-def cek_pengumuman():
-    clear_screen()
-    print("== Cek Pengumuman ==")
-    if not pengumuman:
-        print("Belum ada pengumuman.")
-    else:
-        for i, announcements in enumerate(announcements, start=1):
-            print(f"{i}. {announcements}")
-    input("Tekan 'Enter' untuk kembali ke menu.")
-    
-def cek_notifikasi():
-    clear_screen()
-    print("== Cek Notifikasi ==")
-    if not notifikasi:
-        print("Belum ada notifikasi.")
-    else:
-        for i, laporan in enumerate(laporan, start=1):
-            print(f"{i}. {laporan}")
-    input("Tekan 'Enter' untuk kembali ke menu.")
+    def ubah_pengumuman(self):
+        clear_screen()
+        print("==========================================================")
+        print("||                 UBAH PENGUMUMAN                      ||")
+        print("==========================================================")
+        if not Pengumuman.announcements:
+            print("Belum ada pengumuman.")
+            delay(2)
+            return
+        table = [[i, pengumuman.title, pengumuman.description, pengumuman.date] for i, pengumuman in enumerate(Pengumuman.announcements, start=1)]
+        print(tabulate(table, headers=["No", "Judul", "Deskripsi", "Tanggal"], tablefmt="grid"))
+        print("----------------------------------------------------------")
+        while True:
+            nomor = input("Masukkan nomor pengumuman yang ingin diubah: ")
+            try:
+                nomorBaru = int(nomor) - 1
+                break
+            except ValueError:
+                print("Harus Berupa angka!")
+                continue
+        if 0 <= nomorBaru < len(Pengumuman.announcements):
+            pengumuman = Pengumuman.announcements[nomorBaru]
+            title_baru = input("Masukkan judul baru: ")
+            description_baru = input("Masukkan deskripsi baru: ")
+            pengumuman.title = title_baru
+            pengumuman.description = description_baru
+            print("Pengumuman berhasil diubah.")
+        else:
+            print("Nomor pengumuman tidak valid.")
+        delay(2)
 
-heading()
+    def hapus_pengumuman(self):
+        clear_screen()
+        print("==========================================================")
+        print("||                 HAPUS PENGUMUMAN                     ||")
+        print("==========================================================")
+        if not Pengumuman.announcements:
+            print("Belum ada pengumuman.")
+            delay(2)
+            return
+        table = [[i, pengumuman.title, pengumuman.description, pengumuman.date] for i, pengumuman in enumerate(Pengumuman.announcements, start=1)]
+        print(tabulate(table, headers=["No", "Judul", "Deskripsi", "Tanggal"], tablefmt="grid"))
+        print("----------------------------------------------------------")
+        while True:
+            nomor = input("Masukkan nomor pengumuman yang ingin dihapus: ")
+            try:
+                nomorBaru = int(nomor) - 1
+                break
+            except ValueError:
+                print("Harus Berupa angka!")
+                continue
+        if 0 <= nomorBaru < len(Pengumuman.announcements):
+            Pengumuman.announcements.pop(nomorBaru)
+            print("Pengumuman berhasil dihapus.")
+        else:
+            print("Nomor pengumuman tidak valid.")
+        delay(2)
+
+
+app = App()
+app.start()
