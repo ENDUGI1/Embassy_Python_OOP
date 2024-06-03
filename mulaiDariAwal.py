@@ -6,6 +6,9 @@ from tabulate import tabulate
 # buat qrcode
 import qrcode
 
+# CSV
+import csv
+
 # Buat GUI
 from tkinter import Tk, Label
 from PIL import ImageTk
@@ -34,6 +37,35 @@ class User:
             if user.nik == nik and user.password == password:
                 return user
         return None
+    @staticmethod
+    def save_to_csv():
+        with open('users.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            for user in User.users:
+                writer.writerow([user.name, user.phone, user.nik, user.passport, user.password, user.country])
+
+    @staticmethod
+    def load_from_csv():
+        try:
+            with open('users.csv', 'r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if len(row) == 6:  # Pastikan baris memiliki 6 kolom sesuai dengan data user
+                        User(row[0], row[1], row[2], row[3], row[4], row[5])
+        except FileNotFoundError:
+            # Jika file CSV belum ada, program akan membuat file kosong
+            with open('users.csv', 'w', newline=''):
+                pass
+    @staticmethod
+    def remove_duplicates():
+        seen = set()
+        result = []
+        for user in User.users:
+            user_tuple = (user.name, user.phone, user.nik, user.passport, user.password, user.country)
+            if user_tuple not in seen:
+                seen.add(user_tuple)
+                result.append(user)
+        User.users = result  # Update atribut users dengan hasil yang sudah dihapus duplikat
 
 class Admin(User):
     def __init__(self):
@@ -50,7 +82,37 @@ class Laporan:
 
     @classmethod
     def user_reports(cls, user):
-        return [laporan for laporan in cls.reports if laporan.user == user]
+        return [laporan for laporan in cls.reports if laporan.user == user.name]
+    @staticmethod
+    def save_to_csv():
+        with open('reports.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            for report in Laporan.reports:
+                nama = report.user
+                writer.writerow([report.deskripsi, nama, report.status])
+    @staticmethod
+    def load_from_csv():
+        try:
+            with open('reports.csv', 'r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if len(row) == 3:  # Pastikan baris memiliki 3 kolom sesuai dengan data reports
+                        deskripsi, user, status = row
+                        Laporan(deskripsi, user)
+        except FileNotFoundError:
+            # Jika file CSV belum ada, program akan membuat file kosong
+            with open('reports.csv', 'w', newline=''):
+                pass
+    @staticmethod
+    def remove_duplicates():
+        seen = set()
+        result = []
+        for laporan in Laporan.reports:
+            laporan_tuple = (laporan.deskripsi, laporan.user, laporan.status)
+            if laporan_tuple not in seen:
+                seen.add(laporan_tuple)
+                result.append(laporan)
+        Laporan.reports = result 
 
 class Pengumuman:
     announcements = []
@@ -67,6 +129,37 @@ class Pengumuman:
             if announcement.title == title:
                 return announcement
         return None
+    @staticmethod
+    def save_to_csv():
+        with open('announcements.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            for announcement in Pengumuman.announcements:
+                writer.writerow([announcement.title, announcement.description, announcement.date])
+
+    @staticmethod
+    def load_from_csv():
+        try:
+            with open('announcements.csv', 'r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if len(row) == 3:  # Pastikan baris memiliki 3 kolom sesuai dengan data pengumuman
+                        title, description, date = row
+                        Pengumuman(title, description)
+        except FileNotFoundError:
+            # Jika file CSV belum ada, program akan membuat file kosong
+            with open('announcements.csv', 'w', newline=''):
+                pass
+
+    @staticmethod
+    def remove_duplicates():
+        seen = set()
+        result = []
+        for announcement in Pengumuman.announcements:
+            announcement_tuple = (announcement.title, announcement.description, announcement.date)
+            if announcement_tuple not in seen:
+                seen.add(announcement_tuple)
+                result.append(announcement)
+        Pengumuman.announcements = result 
 
 class Notification:
     notifications = []
@@ -79,13 +172,48 @@ class Notification:
 
     @classmethod
     def user_notifications(cls, user):
-        return [notif for notif in cls.notifications if notif.user == user]
+        return [notif for notif in cls.notifications if notif.user == user.name]
+    @staticmethod
+    def save_to_csv():
+        with open('notifications.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            for notification in Notification.notifications:
+                writer.writerow([notification.user, notification.message, notification.timestamp])
+
+    @staticmethod
+    def load_from_csv():
+        try:
+            with open('notifications.csv', 'r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if len(row) == 3:  # Pastikan baris memiliki 3 kolom sesuai dengan data notification
+                        user, message, timestamp = row
+                        Notification(user, message)
+        except FileNotFoundError:
+            # Jika file CSV belum ada, program akan membuat file kosong
+            with open('notifications.csv', 'w', newline=''):
+                pass
+
+    @staticmethod
+    def remove_duplicates():
+        seen = set()
+        result = []
+        for notification in Notification.notifications:
+            notification_tuple = (notification.user, notification.message, notification.timestamp)
+            if notification_tuple not in seen:
+                seen.add(notification_tuple)
+                result.append(notification)
+        Notification.notifications = result  # Update atribut notifications dengan hasil yang sudah dihapus duplikat
 
 class App:
     def __init__(self):
         self.admin = Admin()
 
     def start(self):
+        User.load_from_csv()
+        Laporan.load_from_csv()
+        Pengumuman.load_from_csv()
+        Notification.load_from_csv()
         self.heading()
 
     def heading(self):
@@ -132,6 +260,14 @@ class App:
         print("""|          JANGAN LUPA AGAR SELALU JAGA KESEHATAN!       |""")
         print("""|                                                        |""")
         print("""==========================================================""")
+        # Laporan.remove_duplicates()
+        # Laporan.save_to_csv()
+        # Pengumuman.remove_duplicates()
+        # Pengumuman.save_to_csv()
+        # Notification.remove_duplicates()
+        # Notification.save_to_csv()
+        # User.remove_duplicates()
+        # User.save_to_csv()
         delay(2.5)
         clear_screen()
         self.credit()
@@ -149,26 +285,45 @@ class App:
         print("==========================================================")
         print("||                     REGISTER                          ||")
         print("==========================================================")
-        name = input("Nama: ")
+        
+        while True:
+            name = input("Nama: ")
+            if name.replace(" ", "").isalpha():
+                break
+            else:
+                print("Nama hanya boleh mengandung huruf!")
+        
         while True:
             phone = input("No Telpon: ")
-            nik = input("NIK: ")
-            try:
-                int(phone)
-                int(nik)
+            if phone.isdigit():
                 break
-            except ValueError:
-                print("Harus Berupa angka!")
-                continue
+            else:
+                print("No Telpon harus berupa angka!")
+        
+        while True:
+            nik = input("NIK: ")
+            if nik.isdigit():
+                break
+            else:
+                print("NIK harus berupa angka!")
+
         passport = input("No Passport: ")
         password = pwinput.pwinput(prompt='Password: ', mask='*')
-        country = input("Negara Saat Ini: ")
+        
+        while True:
+            country = input("Negara Saat Ini: ")
+            if country.replace(" ", "").isalpha():
+                break
+            else:
+                print("Negara hanya boleh mengandung huruf!")
 
         if any(u for u in User.users if u.nik == nik or u.passport == passport):
             print("NIK atau Passport sudah terdaftar!")
             delay(2)
         else:
             User(name, phone, nik, passport, password, country)
+            User.remove_duplicates()
+            User.save_to_csv()
             print("Registrasi berhasil! Silakan login.")
             delay(2)
 
@@ -249,7 +404,9 @@ class App:
         print("||                 BUAT LAPORAN                          ||")
         print("==========================================================")
         deskripsi = input("Masukkan deskripsi laporan: ")
-        Laporan(deskripsi, user)
+        Laporan(deskripsi, user.name)
+        Laporan.remove_duplicates()
+        Laporan.save_to_csv()
         print("----------------------------------------------------------")
         print("Laporan berhasil dibuat!")
         print("==========================================================")
@@ -298,6 +455,8 @@ class App:
             deskripsi_baru = input("Masukkan deskripsi baru: ")
             laporan.deskripsi = deskripsi_baru
             print("Laporan berhasil diubah.")
+            Laporan.remove_duplicates()
+            Laporan.save_to_csv()
         else:
             print("Nomor laporan tidak valid.")
         delay(2)
@@ -331,6 +490,8 @@ class App:
                 return
             Laporan.reports.remove(laporan)
             print("Laporan berhasil dihapus.")
+            Laporan.remove_duplicates()
+            Laporan.save_to_csv()
         else:
             print("Nomor laporan tidak valid.")
         delay(2)
@@ -376,8 +537,52 @@ class App:
                 'alamat': '7 Chatsworth Road, Singapore',
                 'email': 'contact@indonesianembassy.sg',
                 'phone': '+65 6737 7422'
+            },
+            'taiwan': {
+                'alamat': 'No. 550, Rui Guang Road, Neihu District, Taipei, Taiwan',
+                'email': 'contact@indonesian-embassy.tw',
+                'phone': '+886 2 8752 6170'
+            },
+            'malaysia': {
+                'alamat': '233 Jalan Tun Razak, Kuala Lumpur, Malaysia',
+                'email': 'contact@indonesia.org.my',
+                'phone': '+60 3 2116 4016'
+            },
+            'hongkong': {
+                'alamat': '127-129 Leighton Road, Causeway Bay, Hong Kong',
+                'email': 'contact@indonesia-consulate.hk',
+                'phone': '+852 2890 4421'
+            },
+            'korea selatan': {
+                'alamat': '380 Yeouido-dong, Yeongdeungpo-gu, Seoul, South Korea',
+                'email': 'contact@indonesian-embassy.kr',
+                'phone': '+82 2 783 5675'
+            },
+            'jepang': {
+                'alamat': '5-2-9 Higashi Gotanda, Shinagawa-ku, Tokyo, Japan',
+                'email': 'contact@indonesian-embassy.jp',
+                'phone': '+81 3 3441 4201'
+            },
+            'arab saudi': {
+                'alamat': 'Diplomatic Quarter, Riyadh, Saudi Arabia',
+                'email': 'contact@indonesian-embassy.sa',
+                'phone': '+966 11 488 2800'
+            },
+            'italia': {
+                'alamat': 'Via Campania 55, Rome, Italy',
+                'email': 'contact@indonesian-embassy.it',
+                'phone': '+39 06 420 0911'
+            },
+            'brunei darussalam': {
+                'alamat': 'No. 29, Simpang 336, Jalan Duta, Kampong Sungai Hanching, Brunei',
+                'email': 'contact@indonesian-embassy.bn',
+                'phone': '+673 233 0180'
+            },
+            'turki': {
+                'alamat': 'Abdullah Cevdet Sokak No.12, Çankaya, Ankara, Turkey',
+                'email': 'contact@indonesian-embassy.tr',
+                'phone': '+90 312 438 2190'
             }
-            # Add more countries as needed
         }
         info = kedutaan.get(country, None)
         if info:
@@ -385,26 +590,27 @@ class App:
             print(f"Alamat: {info['alamat']}")
             print(f"Email: {info['email']}")
             print(f"Nomor Telepon: {info['phone']}")
-            confirm = input("Tampilkan QRCODE website kemlu? (ketik 'y' jika iya) ")
-            if confirm == "y":
-                data = "https://www.kemlu.go.id/portal/id"
-
-                # generate qrcodenya
-                img = qrcode.make(data)
- 
-                root = Tk()
-                root.title("WEBSTIE OFFICIAL KEMLU")
-
-                tk_img = ImageTk.PhotoImage(img)
-
-                # Create a label widget to display the image
-                label = Label(root, image=tk_img)
-                label.pack()
-
-                root.mainloop()
-
         else:
             print(f"Informasi kedutaan untuk negara {user.country} tidak tersedia.")
+        
+        confirm = input("Tampilkan QRCODE website kemlu? (ketik 'y' jika iya) ")
+        if confirm == "y":
+            data = "https://www.kemlu.go.id/portal/id"
+            
+            # generate qrcode
+            img = qrcode.make(data)
+
+            root = Tk()
+            root.title("WEBSTIE OFFICIAL KEMLU")
+
+            tk_img = ImageTk.PhotoImage(img)
+
+            # Create a label widget to display the image
+            label = Label(root, image=tk_img)
+            label.pack()
+
+            root.mainloop()
+
         input("Tekan 'Enter' untuk kembali ke menu.")
 
     def hubungi_user(self):
@@ -425,8 +631,10 @@ class App:
             
             if user:
                 pesan = input("Masukkan pesan yang ingin dikirim: ").strip()
-                Notification(user, pesan)
+                Notification(nama, pesan)
                 print("Pesan berhasil dikirim!")
+                Notification.remove_duplicates()
+                Notification.save_to_csv()
                 delay(2)
                 return
             else:
@@ -468,7 +676,7 @@ class App:
         if not Laporan.reports:
             print("Belum ada laporan.")
         else:
-            table = [[i, laporan.deskripsi, laporan.status, laporan.user.name] for i, laporan in enumerate(Laporan.reports, start=1)]
+            table = [[i, laporan.deskripsi, laporan.status, laporan.user] for i, laporan in enumerate(Laporan.reports, start=1)]
             print(tabulate(table, headers=["No", "Deskripsi", "Status", "User"], tablefmt="grid"))
 
     def tindak_lanjuti_laporan(self):
@@ -480,7 +688,7 @@ class App:
             print("Belum ada laporan.")
             delay(2)
             return
-        table = [[i, laporan.deskripsi, laporan.status, laporan.user.name] for i, laporan in enumerate(Laporan.reports, start=1)]
+        table = [[i, laporan.deskripsi, laporan.status, laporan.user] for i, laporan in enumerate(Laporan.reports, start=1)]
         print(tabulate(table, headers=["No", "Deskripsi", "Status", "User"], tablefmt="grid"))
         print("----------------------------------------------------------")
         while True:
@@ -495,6 +703,8 @@ class App:
             laporan = Laporan.reports[nomorBaru]
             laporan.status = "Sudah Ditindaklanjuti"
             print("Laporan berhasil ditindaklanjuti.")
+            Laporan.remove_duplicates()
+            Laporan.save_to_csv()
         else:
             print("Nomor laporan tidak valid.")
         delay(2)
@@ -535,6 +745,8 @@ class App:
         description = input("Masukkan deskripsi pengumuman: ")
         Pengumuman(title, description)
         print("Pengumuman berhasil dibuat.")
+        Pengumuman.remove_duplicates()
+        Pengumuman.save_to_csv()
         delay(2)
 
     def lihat_pengumuman(self):
@@ -575,6 +787,8 @@ class App:
             description_baru = input("Masukkan deskripsi baru: ")
             pengumuman.title = title_baru
             pengumuman.description = description_baru
+            Pengumuman.remove_duplicates()
+            Pengumuman.save_to_csv()
             print("Pengumuman berhasil diubah.")
         else:
             print("Nomor pengumuman tidak valid.")
@@ -603,6 +817,8 @@ class App:
         if 0 <= nomorBaru < len(Pengumuman.announcements):
             Pengumuman.announcements.pop(nomorBaru)
             print("Pengumuman berhasil dihapus.")
+            Pengumuman.remove_duplicates()
+            Pengumuman.save_to_csv()
         else:
             print("Nomor pengumuman tidak valid.")
         delay(2)
