@@ -3,6 +3,13 @@ import time
 import pwinput
 from tabulate import tabulate
 
+# buat qrcode
+import qrcode
+
+# Buat GUI
+from tkinter import Tk, Label
+from PIL import ImageTk
+
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -378,6 +385,24 @@ class App:
             print(f"Alamat: {info['alamat']}")
             print(f"Email: {info['email']}")
             print(f"Nomor Telepon: {info['phone']}")
+            confirm = input("Tampilkan QRCODE website kemlu? (ketik 'y' jika iya) ")
+            if confirm == "y":
+                data = "https://www.kemlu.go.id/portal/id"
+
+                # generate qrcodenya
+                img = qrcode.make(data)
+ 
+                root = Tk()
+                root.title("WEBSTIE OFFICIAL KEMLU")
+
+                tk_img = ImageTk.PhotoImage(img)
+
+                # Create a label widget to display the image
+                label = Label(root, image=tk_img)
+                label.pack()
+
+                root.mainloop()
+
         else:
             print(f"Informasi kedutaan untuk negara {user.country} tidak tersedia.")
         input("Tekan 'Enter' untuk kembali ke menu.")
