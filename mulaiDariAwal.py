@@ -260,14 +260,6 @@ class App:
         print("""|          JANGAN LUPA AGAR SELALU JAGA KESEHATAN!       |""")
         print("""|                                                        |""")
         print("""==========================================================""")
-        # Laporan.remove_duplicates()
-        # Laporan.save_to_csv()
-        # Pengumuman.remove_duplicates()
-        # Pengumuman.save_to_csv()
-        # Notification.remove_duplicates()
-        # Notification.save_to_csv()
-        # User.remove_duplicates()
-        # User.save_to_csv()
         delay(2.5)
         clear_screen()
         self.credit()
@@ -317,8 +309,8 @@ class App:
             else:
                 print("Negara hanya boleh mengandung huruf!")
 
-        if any(u for u in User.users if u.nik == nik or u.passport == passport):
-            print("NIK atau Passport sudah terdaftar!")
+        if any(u for u in User.users if u.nik == nik or u.name == name or u.passport == passport):
+            print("NIK, Nama, Passport sudah terdaftar!")
             delay(2)
         else:
             User(name, phone, nik, passport, password, country)
