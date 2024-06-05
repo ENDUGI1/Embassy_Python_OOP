@@ -19,8 +19,8 @@ def clear_screen():
 def delay(seconds):
     time.sleep(seconds)
 
-class User:
-    users = []
+class User: # Class User
+    users = [] # List untuk menyimpan data users
 
     def __init__(self, name, phone, nik, passport, password, country):
         self.name = name
@@ -32,20 +32,20 @@ class User:
         User.users.append(self)
 
     @classmethod
-    def find_user(cls, nik, password):
+    def find_user(cls, nik, password): # Method untuk mencari nik dan password (digunakan ketika login)
         for user in cls.users:
             if user.nik == nik and user.password == password:
                 return user
         return None
     @staticmethod
-    def save_to_csv():
+    def save_to_csv(): # Method untuk menyimpan data user ke file users.csv (digunakan ketika registrasi akun)
         with open('users.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             for user in User.users:
                 writer.writerow([user.name, user.phone, user.nik, user.passport, user.password, user.country])
 
     @staticmethod
-    def load_from_csv():
+    def load_from_csv(): # Method untuk mengambil data user dari file users.csv (digunakan saat program dijalankan)
         try:
             with open('users.csv', 'r') as file:
                 reader = csv.reader(file)
@@ -57,7 +57,7 @@ class User:
             with open('users.csv', 'w', newline=''):
                 pass
     @staticmethod
-    def remove_duplicates():
+    def remove_duplicates(): # Method untuk menghapus data yang duplikat pada data user
         seen = set()
         result = []
         for user in User.users:
@@ -67,12 +67,12 @@ class User:
                 result.append(user)
         User.users = result  # Update atribut users dengan hasil yang sudah dihapus duplikat
 
-class Admin(User):
+class Admin(User): # Class admin inheritent dengan class user
     def __init__(self):
         super().__init__('admin', 'admin', 'admin', 'admin', 'admin', 'admin')
 
-class Laporan:
-    reports = []
+class Laporan: # Class Laporan
+    reports = [] # list untuk menyimpan laporan
 
     def __init__(self, deskripsi, user):
         self.deskripsi = deskripsi
@@ -81,17 +81,17 @@ class Laporan:
         Laporan.reports.append(self)
 
     @classmethod
-    def user_reports(cls, user):
+    def user_reports(cls, user): # Method untuk mengambil data laporan (digunakan saat akan melihat laporan)
         return [laporan for laporan in cls.reports if laporan.user == user.name]
     @staticmethod
-    def save_to_csv():
+    def save_to_csv(): # Method untuk menyimpan data laporan ke file reports.csv (digunakan saat membuat, mengubah, dan menghapus laporan)
         with open('reports.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             for report in Laporan.reports:
                 nama = report.user
                 writer.writerow([report.deskripsi, nama, report.status])
     @staticmethod
-    def load_from_csv():
+    def load_from_csv(): # Method untuk mengambil data Laporan dari file reports.csv (digunakan saat program dijalankan)
         try:
             with open('reports.csv', 'r') as file:
                 reader = csv.reader(file)
@@ -104,7 +104,7 @@ class Laporan:
             with open('reports.csv', 'w', newline=''):
                 pass
     @staticmethod
-    def remove_duplicates():
+    def remove_duplicates(): # Method untuk menghapus data yang duplikat pada data laporan
         seen = set()
         result = []
         for laporan in Laporan.reports:
@@ -114,8 +114,8 @@ class Laporan:
                 result.append(laporan)
         Laporan.reports = result 
 
-class Pengumuman:
-    announcements = []
+class Pengumuman: # Class Pengumuman
+    announcements = [] # List untuk menyimpan pengumuman
 
     def __init__(self, title, description):
         self.title = title
@@ -130,14 +130,14 @@ class Pengumuman:
                 return announcement
         return None
     @staticmethod
-    def save_to_csv():
+    def save_to_csv(): # Method untuk menyimpan data pengumuman ke file announcements.csv (digunakan saat membuat, mengubah, dan menghapus pengumuman)
         with open('announcements.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             for announcement in Pengumuman.announcements:
                 writer.writerow([announcement.title, announcement.description, announcement.date])
 
     @staticmethod
-    def load_from_csv():
+    def load_from_csv(): # Method untuk mengambil data pengumuman dari file announcements.csv (digunakan saat program dijalankan)
         try:
             with open('announcements.csv', 'r') as file:
                 reader = csv.reader(file)
@@ -151,7 +151,7 @@ class Pengumuman:
                 pass
 
     @staticmethod
-    def remove_duplicates():
+    def remove_duplicates(): # Method untuk menghapus data yang duplikat pada data pengumuman
         seen = set()
         result = []
         for announcement in Pengumuman.announcements:
@@ -161,8 +161,8 @@ class Pengumuman:
                 result.append(announcement)
         Pengumuman.announcements = result 
 
-class Notification:
-    notifications = []
+class Notification: # Class Notification
+    notifications = [] # List untuk menyimpan notofikasi
 
     def __init__(self, user, message):
         self.user = user
@@ -171,17 +171,17 @@ class Notification:
         Notification.notifications.append(self)
 
     @classmethod
-    def user_notifications(cls, user):
+    def user_notifications(cls, user): # Method untuk melihat notifikasi (digunakan saat user melihat notifikasi)
         return [notif for notif in cls.notifications if notif.user == user.name]
     @staticmethod
-    def save_to_csv():
+    def save_to_csv(): # Method untuk menyimpan data notifikasi ke file notifications.csv (digunakan saat membuat mengirim pesan ke user)
         with open('notifications.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             for notification in Notification.notifications:
                 writer.writerow([notification.user, notification.message, notification.timestamp])
 
     @staticmethod
-    def load_from_csv():
+    def load_from_csv(): # Method untuk mengambil data notifikasi dari file notifications.csv (digunakan saat program dijalankan)
         try:
             with open('notifications.csv', 'r') as file:
                 reader = csv.reader(file)
@@ -195,7 +195,7 @@ class Notification:
                 pass
 
     @staticmethod
-    def remove_duplicates():
+    def remove_duplicates(): # Method untuk menghapus data yang duplikat pada data notifikasi
         seen = set()
         result = []
         for notification in Notification.notifications:
@@ -205,18 +205,18 @@ class Notification:
                 result.append(notification)
         Notification.notifications = result  # Update atribut notifications dengan hasil yang sudah dihapus duplikat
 
-class App:
+class App: # Class App
     def __init__(self):
         self.admin = Admin()
 
-    def start(self):
-        User.load_from_csv()
+    def start(self): # fungsi saat program dijalankan (akan mengambil data dari file csv)
+        User.load_from_csv() 
         Laporan.load_from_csv()
         Pengumuman.load_from_csv()
         Notification.load_from_csv()
         self.heading()
 
-    def heading(self):
+    def heading(self): # heading tampilan saat program dijalankan
         clear_screen()
         print("============================================================")
         print("||                                                        ||")
@@ -229,7 +229,7 @@ class App:
         clear_screen()
         self.menu_utama()
 
-    def menu_utama(self):
+    def menu_utama(self): # menu utama
         while True:
             clear_screen()
             print("============================================================")
@@ -243,16 +243,16 @@ class App:
             print("============================================================")
             menu = input("Masukkan Pilihan : ")
             if menu == "1":
-                self.register()
+                self.register() # menuju ke registrasi
             elif menu == "2":
-                self.login()
+                self.login() # menuju ke login
             elif menu == "3":
-                self.keluar_app()
+                self.keluar_app() # Logout
             else:
-                print("Pilihan tidak ada")
+                print("Pilihan tidak ada") # erro handling jika pilihan tidak ada
                 delay(1.5)
 
-    def keluar_app(self):
+    def keluar_app(self): # tampilan saat keluar program
         clear_screen()
         print("""==========================================================""")
         print("""|                                                        |""")
@@ -265,57 +265,57 @@ class App:
         self.credit()
         exit()
 
-    def credit(self):
+    def credit(self): #creadit aplikasi
         clear_screen()
         print("""==========================================================""")
         print("""|                                                        |""")
         print("""==========================================================""")
         delay(2.5)
 
-    def register(self):
+    def register(self): # fungsi registrasi
         clear_screen()
         print("==========================================================")
         print("||                     REGISTER                          ||")
         print("==========================================================")
         
         while True:
-            name = input("Nama: ")
-            if name.replace(" ", "").isalpha():
+            name = input("Nama: ") # input nama
+            if name.replace(" ", "").isalpha(): # error handling input nama hanya bisa huruf
                 break
             else:
                 print("Nama hanya boleh mengandung huruf!")
         
         while True:
-            phone = input("No Telpon: ")
-            if phone.isdigit():
+            phone = input("No Telpon: ") # input nomor telepon
+            if phone.isdigit(): # error handling input nomor telepon hanya bisa angka
                 break
             else:
                 print("No Telpon harus berupa angka!")
         
         while True:
-            nik = input("NIK: ")
-            if nik.isdigit():
+            nik = input("NIK: ") # input nik
+            if nik.isdigit(): # error handling input nik hanya bisa angka
                 break
             else:
                 print("NIK harus berupa angka!")
 
-        passport = input("No Passport: ")
-        password = pwinput.pwinput(prompt='Password: ', mask='*')
+        passport = input("No Passport: ") # input passport
+        password = pwinput.pwinput(prompt='Password: ', mask='*') # input password (saat menginput password akan di samarkan dengan *)
         
         while True:
-            country = input("Negara Saat Ini: ")
-            if country.replace(" ", "").isalpha():
+            country = input("Negara Saat Ini: ") # input negara
+            if country.replace(" ", "").isalpha(): # error handling input negara hanya bisa huruf
                 break
             else:
                 print("Negara hanya boleh mengandung huruf!")
 
-        if any(u for u in User.users if u.nik == nik or u.name == name or u.passport == passport):
+        if any(u for u in User.users if u.nik == nik or u.name == name or u.passport == passport): # error jika NIK, Nama, Passport sudah terdaftar
             print("NIK, Nama, Passport sudah terdaftar!")
             delay(2)
         else:
-            User(name, phone, nik, passport, password, country)
+            User(name, phone, nik, passport, password, country) # menyimpan registrasi
             User.remove_duplicates()
-            User.save_to_csv()
+            User.save_to_csv() # menyimpan data user ke file users.csv
             print("Registrasi berhasil! Silakan login.")
             delay(2)
 
