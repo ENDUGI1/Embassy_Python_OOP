@@ -1,0 +1,17 @@
+# Blueprint deploy untuk Render.com — versi web SIPMI (FastAPI).
+# Cara pakai: push file ini ke GitHub, lalu di Render pilih
+# "New +" > "Blueprint" dan arahkan ke repo ini. Render membaca file ini
+# dan membuat service-nya otomatis.
+services:
+  - type: web
+    name: sipmi
+    runtime: python
+    plan: free
+    rootDir: web                 # jalankan dari dalam folder web/
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.1
+      - key: SECRET_KEY          # dibuat acak otomatis oleh Render
+        generateValue: true

@@ -1,5 +1,6 @@
 coba/
 __pycache__/
 *.pyc
+*.db
 .agents/
 .claude/

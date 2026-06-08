@@ -1,52 +1,45 @@
 """
-Model OOP untuk versi web Sistem Pengaduan & Bantuan Perlindungan PMI.
+Model OOP untuk versi web SIPMI (Sistem Pengaduan & Bantuan Perlindungan PMI).
 
-Class di sini adalah hasil port dari mulaiDariAwal.py (versi CLI). Struktur OOP
-dipertahankan apa adanya: pewarisan (Admin -> User), @classmethod, dan
-@staticmethod untuk operasi CSV. Yang berubah hanya:
-  - Path CSV dibuat absolut (mengarah ke root project), bukan relatif.
-  - Setiap kolom di-strip() saat load agar data lama yang ber-spasi tetap cocok.
-  - Logika input/print khas terminal dipindah ke layer web (main.py).
+Class di sini hasil port dari versi CLI (SafeMigran.py / mulaiDariAwal.py).
+Struktur OOP dipertahankan: pewarisan (Admin -> User), @classmethod, dan
+@staticmethod. Yang berubah hanya layer penyimpanan: dari file CSV menjadi
+database SQLite (lihat database.py). Pola lama tetap sama — data dimuat ke
+daftar di memori (User.users, dst.), lalu disimpan kembali ke database.
+
+Password tidak lagi disimpan polos; lihat security.py.
 """
 
-import csv
 import time
-from pathlib import Path
 
-# Direktori data = root project (satu level di atas folder web/).
-# CSV lama (users.csv, reports.csv, dst.) tetap dipakai supaya data tidak hilang.
-DATA_DIR = Path(__file__).resolve().parent.parent
-
-USERS_CSV = DATA_DIR / "users.csv"
-REPORTS_CSV = DATA_DIR / "reports.csv"
-ANNOUNCEMENTS_CSV = DATA_DIR / "announcements.csv"
-NOTIFICATIONS_CSV = DATA_DIR / "notifications.csv"
+from database import get_conn, init_db
+from security import verify_password
 
 
 # ---------------------------------------------------------------------------
 # Kelas User untuk mengelola data pengguna
 # ---------------------------------------------------------------------------
 class User:
-    users = []  # Menyimpan daftar semua pengguna
+    users = []  # Menyimpan daftar semua pengguna (cache di memori)
 
     def __init__(self, name, phone, nik, passport, password, country):
         self.name = name
         self.phone = phone
         self.nik = nik
         self.passport = passport
-        self.password = password
+        self.password = password  # sudah dalam bentuk hash (kecuali admin)
         self.country = country
-        User.users.append(self)  # Tambahkan pengguna baru ke daftar
+        User.users.append(self)
 
-    # Metode kelas untuk mencari pengguna berdasarkan NIK dan password
+    # Cari pengguna berdasarkan NIK lalu verifikasi password (mendukung hash)
     @classmethod
     def find_user(cls, nik, password):
         for user in cls.users:
-            if user.nik == nik and user.password == password:
+            if user.nik == nik and verify_password(user.password, password):
                 return user
         return None
 
-    # Metode kelas untuk mencari pengguna berdasarkan NIK saja
+    # Cari pengguna berdasarkan NIK saja
     @classmethod
     def find_by_nik(cls, nik):
         for user in cls.users:
@@ -54,99 +47,96 @@ class User:
                 return user
         return None
 
-    # Metode statis untuk menyimpan data pengguna ke file CSV
+    # Simpan seluruh daftar pengguna ke database (akun admin tidak disimpan)
     @staticmethod
-    def save_to_csv():
-        with open(USERS_CSV, 'w', newline='') as file:
-            writer = csv.writer(file)
-            for user in User.users:
-                writer.writerow([user.name, user.phone, user.nik, user.passport, user.password, user.country])
+    def save_all():
+        conn = get_conn()
+        conn.execute("DELETE FROM users")
+        for u in User.users:
+            if u.name == "admin":
+                continue
+            conn.execute(
+                "INSERT INTO users (name, phone, nik, passport, password, country) "
+                "VALUES (?,?,?,?,?,?)",
+                (u.name, u.phone, u.nik, u.passport, u.password, u.country),
+            )
+        conn.commit()
 
-    # Metode statis untuk memuat data pengguna dari file CSV
+    # Muat seluruh pengguna dari database ke memori
     @staticmethod
-    def load_from_csv():
-        try:
-            with open(USERS_CSV, 'r') as file:
-                reader = csv.reader(file)
-                for row in reader:
-                    if len(row) == 6:  # Pastikan baris memiliki 6 kolom sesuai dengan data user
-                        cleaned = [field.strip() for field in row]
-                        User(*cleaned)
-        except FileNotFoundError:
-            # Jika file CSV belum ada, program akan membuat file kosong
-            with open(USERS_CSV, 'w', newline=''):
-                pass
+    def load_all():
+        conn = get_conn()
+        rows = conn.execute(
+            "SELECT name, phone, nik, passport, password, country FROM users ORDER BY id"
+        ).fetchall()
+        for r in rows:
+            User(r["name"], r["phone"], r["nik"], r["passport"], r["password"], r["country"])
 
-    # Metode statis untuk menghapus duplikat pengguna dari daftar
+    # Hapus duplikat pengguna dari daftar di memori
     @staticmethod
     def remove_duplicates():
         seen = set()
         result = []
         for user in User.users:
-            user_tuple = (user.name, user.phone, user.nik, user.passport, user.password, user.country)
-            if user_tuple not in seen:
-                seen.add(user_tuple)
+            key = (user.name, user.phone, user.nik, user.passport, user.password, user.country)
+            if key not in seen:
+                seen.add(key)
                 result.append(user)
-        User.users = result  # Update atribut users dengan hasil yang sudah dihapus duplikat
+        User.users = result
 
 
 # ---------------------------------------------------------------------------
-# Kelas Admin yang mewarisi dari kelas User, mewakili admin sistem
+# Kelas Admin yang mewarisi dari kelas User
 # ---------------------------------------------------------------------------
 class Admin(User):
     def __init__(self):
-        super().__init__('admin', 'admin', 'admin', 'admin', 'admin', 'admin')
+        super().__init__("admin", "admin", "admin", "admin", "admin", "admin")
 
 
 # ---------------------------------------------------------------------------
 # Kelas Laporan untuk mengelola data laporan
 # ---------------------------------------------------------------------------
 class Laporan:
-    reports = []  # Menyimpan daftar semua laporan
+    reports = []
 
     def __init__(self, deskripsi, user, status="Belum Ditindaklanjuti"):
         self.deskripsi = deskripsi
         self.user = user
         self.status = status
-        Laporan.reports.append(self)  # Tambahkan laporan baru ke daftar
+        Laporan.reports.append(self)
 
-    # Metode kelas untuk mendapatkan laporan berdasarkan pengguna
     @classmethod
     def user_reports(cls, user):
         return [laporan for laporan in cls.reports if laporan.user == user.name]
 
-    # Metode statis untuk menyimpan data laporan ke file CSV
     @staticmethod
-    def save_to_csv():
-        with open(REPORTS_CSV, 'w', newline='') as file:
-            writer = csv.writer(file)
-            for report in Laporan.reports:
-                writer.writerow([report.deskripsi, report.user, report.status])
+    def save_all():
+        conn = get_conn()
+        conn.execute("DELETE FROM reports")
+        for r in Laporan.reports:
+            conn.execute(
+                "INSERT INTO reports (deskripsi, user, status) VALUES (?,?,?)",
+                (r.deskripsi, r.user, r.status),
+            )
+        conn.commit()
 
-    # Metode statis untuk memuat data laporan dari file CSV
     @staticmethod
-    def load_from_csv():
-        try:
-            with open(REPORTS_CSV, 'r') as file:
-                reader = csv.reader(file)
-                for row in reader:
-                    if len(row) == 3:  # Pastikan baris memiliki 3 kolom sesuai dengan data reports
-                        deskripsi, user, status = [field.strip() for field in row]
-                        Laporan(deskripsi, user, status)
-        except FileNotFoundError:
-            # Jika file CSV belum ada, program akan membuat file kosong
-            with open(REPORTS_CSV, 'w', newline=''):
-                pass
+    def load_all():
+        conn = get_conn()
+        rows = conn.execute(
+            "SELECT deskripsi, user, status FROM reports ORDER BY id"
+        ).fetchall()
+        for r in rows:
+            Laporan(r["deskripsi"], r["user"], r["status"])
 
-    # Metode statis untuk menghapus duplikat laporan dari daftar
     @staticmethod
     def remove_duplicates():
         seen = set()
         result = []
         for laporan in Laporan.reports:
-            laporan_tuple = (laporan.deskripsi, laporan.user, laporan.status)
-            if laporan_tuple not in seen:
-                seen.add(laporan_tuple)
+            key = (laporan.deskripsi, laporan.user, laporan.status)
+            if key not in seen:
+                seen.add(key)
                 result.append(laporan)
         Laporan.reports = result
 
@@ -155,15 +145,14 @@ class Laporan:
 # Kelas Pengumuman untuk mengelola data pengumuman
 # ---------------------------------------------------------------------------
 class Pengumuman:
-    announcements = []  # Menyimpan daftar semua pengumuman
+    announcements = []
 
     def __init__(self, title, description, date=None):
         self.title = title
         self.description = description
         self.date = date if date else time.strftime("%Y-%m-%d %H:%M:%S")
-        Pengumuman.announcements.append(self)  # Tambahkan pengumuman baru ke daftar
+        Pengumuman.announcements.append(self)
 
-    # Metode kelas untuk mencari pengumuman berdasarkan judul
     @classmethod
     def find_announcement(cls, title):
         for announcement in cls.announcements:
@@ -171,38 +160,34 @@ class Pengumuman:
                 return announcement
         return None
 
-    # Metode statis untuk menyimpan data pengumuman ke file CSV
     @staticmethod
-    def save_to_csv():
-        with open(ANNOUNCEMENTS_CSV, 'w', newline='') as file:
-            writer = csv.writer(file)
-            for announcement in Pengumuman.announcements:
-                writer.writerow([announcement.title, announcement.description, announcement.date])
+    def save_all():
+        conn = get_conn()
+        conn.execute("DELETE FROM announcements")
+        for a in Pengumuman.announcements:
+            conn.execute(
+                "INSERT INTO announcements (title, description, date) VALUES (?,?,?)",
+                (a.title, a.description, a.date),
+            )
+        conn.commit()
 
-    # Metode statis untuk memuat data pengumuman dari file CSV
     @staticmethod
-    def load_from_csv():
-        try:
-            with open(ANNOUNCEMENTS_CSV, 'r') as file:
-                reader = csv.reader(file)
-                for row in reader:
-                    if len(row) == 3:  # Pastikan baris memiliki 3 kolom sesuai dengan data pengumuman
-                        title, description, date = [field.strip() for field in row]
-                        Pengumuman(title, description, date)
-        except FileNotFoundError:
-            # Jika file CSV belum ada, program akan membuat file kosong
-            with open(ANNOUNCEMENTS_CSV, 'w', newline=''):
-                pass
+    def load_all():
+        conn = get_conn()
+        rows = conn.execute(
+            "SELECT title, description, date FROM announcements ORDER BY id"
+        ).fetchall()
+        for r in rows:
+            Pengumuman(r["title"], r["description"], r["date"])
 
-    # Metode statis untuk menghapus duplikat pengumuman dari daftar
     @staticmethod
     def remove_duplicates():
         seen = set()
         result = []
         for announcement in Pengumuman.announcements:
-            announcement_tuple = (announcement.title, announcement.description, announcement.date)
-            if announcement_tuple not in seen:
-                seen.add(announcement_tuple)
+            key = (announcement.title, announcement.description, announcement.date)
+            if key not in seen:
+                seen.add(key)
                 result.append(announcement)
         Pengumuman.announcements = result
 
@@ -211,120 +196,73 @@ class Pengumuman:
 # Kelas Notification untuk mengelola data notifikasi
 # ---------------------------------------------------------------------------
 class Notification:
-    notifications = []  # Menyimpan daftar semua notifikasi
+    notifications = []
 
     def __init__(self, user, message, timestamp=None):
         self.user = user
         self.message = message
         self.timestamp = timestamp if timestamp else time.strftime("%Y-%m-%d %H:%M:%S")
-        Notification.notifications.append(self)  # Tambahkan notifikasi baru ke daftar
+        Notification.notifications.append(self)
 
-    # Metode kelas untuk mendapatkan notifikasi berdasarkan pengguna
     @classmethod
     def user_notifications(cls, user):
         return [notif for notif in cls.notifications if notif.user == user.name]
 
-    # Metode statis untuk menyimpan data notifikasi ke file CSV
     @staticmethod
-    def save_to_csv():
-        with open(NOTIFICATIONS_CSV, 'w', newline='') as file:
-            writer = csv.writer(file)
-            for notification in Notification.notifications:
-                writer.writerow([notification.user, notification.message, notification.timestamp])
+    def save_all():
+        conn = get_conn()
+        conn.execute("DELETE FROM notifications")
+        for n in Notification.notifications:
+            conn.execute(
+                "INSERT INTO notifications (user, message, timestamp) VALUES (?,?,?)",
+                (n.user, n.message, n.timestamp),
+            )
+        conn.commit()
 
-    # Metode statis untuk memuat data notifikasi dari file CSV
     @staticmethod
-    def load_from_csv():
-        try:
-            with open(NOTIFICATIONS_CSV, 'r') as file:
-                reader = csv.reader(file)
-                for row in reader:
-                    if len(row) == 3:  # Pastikan baris memiliki 3 kolom sesuai dengan data notification
-                        user, message, timestamp = [field.strip() for field in row]
-                        Notification(user, message, timestamp)
-        except FileNotFoundError:
-            # Jika file CSV belum ada, program akan membuat file kosong
-            with open(NOTIFICATIONS_CSV, 'w', newline=''):
-                pass
+    def load_all():
+        conn = get_conn()
+        rows = conn.execute(
+            "SELECT user, message, timestamp FROM notifications ORDER BY id"
+        ).fetchall()
+        for r in rows:
+            Notification(r["user"], r["message"], r["timestamp"])
 
-    # Metode statis untuk menghapus duplikat notifikasi dari daftar
     @staticmethod
     def remove_duplicates():
         seen = set()
         result = []
         for notification in Notification.notifications:
-            notification_tuple = (notification.user, notification.message, notification.timestamp)
-            if notification_tuple not in seen:
-                seen.add(notification_tuple)
+            key = (notification.user, notification.message, notification.timestamp)
+            if key not in seen:
+                seen.add(key)
                 result.append(notification)
         Notification.notifications = result
 
 
 # ---------------------------------------------------------------------------
-# Data kontak kedutaan (dipindah dari method kontak_kedutaan versi CLI)
+# Data kontak kedutaan
 # ---------------------------------------------------------------------------
 KEDUTAAN = {
-    'indonesia': {
-        'alamat': 'Jl. Merdeka No. 1, Jakarta, Indonesia',
-        'email': 'contact@indonesia-embassy.com',
-        'phone': '+62 21 12345678',
-    },
-    'singapore': {
-        'alamat': '7 Chatsworth Road, Singapore',
-        'email': 'contact@indonesianembassy.sg',
-        'phone': '+65 6737 7422',
-    },
-    'taiwan': {
-        'alamat': 'No. 550, Rui Guang Road, Neihu District, Taipei, Taiwan',
-        'email': 'contact@indonesian-embassy.tw',
-        'phone': '+886 2 8752 6170',
-    },
-    'malaysia': {
-        'alamat': '233 Jalan Tun Razak, Kuala Lumpur, Malaysia',
-        'email': 'contact@indonesia.org.my',
-        'phone': '+60 3 2116 4016',
-    },
-    'hongkong': {
-        'alamat': '127-129 Leighton Road, Causeway Bay, Hong Kong',
-        'email': 'contact@indonesia-consulate.hk',
-        'phone': '+852 2890 4421',
-    },
-    'korea selatan': {
-        'alamat': '380 Yeouido-dong, Yeongdeungpo-gu, Seoul, South Korea',
-        'email': 'contact@indonesian-embassy.kr',
-        'phone': '+82 2 783 5675',
-    },
-    'jepang': {
-        'alamat': '5-2-9 Higashi Gotanda, Shinagawa-ku, Tokyo, Japan',
-        'email': 'contact@indonesian-embassy.jp',
-        'phone': '+81 3 3441 4201',
-    },
-    'arab saudi': {
-        'alamat': 'Diplomatic Quarter, Riyadh, Saudi Arabia',
-        'email': 'contact@indonesian-embassy.sa',
-        'phone': '+966 11 488 2800',
-    },
-    'italia': {
-        'alamat': 'Via Campania 55, Rome, Italy',
-        'email': 'contact@indonesian-embassy.it',
-        'phone': '+39 06 420 0911',
-    },
-    'brunei darussalam': {
-        'alamat': 'No. 29, Simpang 336, Jalan Duta, Kampong Sungai Hanching, Brunei',
-        'email': 'contact@indonesian-embassy.bn',
-        'phone': '+673 233 0180',
-    },
-    'turki': {
-        'alamat': 'Abdullah Cevdet Sokak No.12, Cankaya, Ankara, Turkey',
-        'email': 'contact@indonesian-embassy.tr',
-        'phone': '+90 312 438 2190',
-    },
+    'indonesia': {'alamat': 'Jl. Merdeka No. 1, Jakarta, Indonesia', 'email': 'contact@indonesia-embassy.com', 'phone': '+62 21 12345678'},
+    'singapore': {'alamat': '7 Chatsworth Road, Singapore', 'email': 'contact@indonesianembassy.sg', 'phone': '+65 6737 7422'},
+    'taiwan': {'alamat': 'No. 550, Rui Guang Road, Neihu District, Taipei, Taiwan', 'email': 'contact@indonesian-embassy.tw', 'phone': '+886 2 8752 6170'},
+    'malaysia': {'alamat': '233 Jalan Tun Razak, Kuala Lumpur, Malaysia', 'email': 'contact@indonesia.org.my', 'phone': '+60 3 2116 4016'},
+    'hongkong': {'alamat': '127-129 Leighton Road, Causeway Bay, Hong Kong', 'email': 'contact@indonesia-consulate.hk', 'phone': '+852 2890 4421'},
+    'korea selatan': {'alamat': '380 Yeouido-dong, Yeongdeungpo-gu, Seoul, South Korea', 'email': 'contact@indonesian-embassy.kr', 'phone': '+82 2 783 5675'},
+    'jepang': {'alamat': '5-2-9 Higashi Gotanda, Shinagawa-ku, Tokyo, Japan', 'email': 'contact@indonesian-embassy.jp', 'phone': '+81 3 3441 4201'},
+    'arab saudi': {'alamat': 'Diplomatic Quarter, Riyadh, Saudi Arabia', 'email': 'contact@indonesian-embassy.sa', 'phone': '+966 11 488 2800'},
+    'italia': {'alamat': 'Via Campania 55, Rome, Italy', 'email': 'contact@indonesian-embassy.it', 'phone': '+39 06 420 0911'},
+    'brunei darussalam': {'alamat': 'No. 29, Simpang 336, Jalan Duta, Kampong Sungai Hanching, Brunei', 'email': 'contact@indonesian-embassy.bn', 'phone': '+673 233 0180'},
+    'turki': {'alamat': 'Abdullah Cevdet Sokak No.12, Cankaya, Ankara, Turkey', 'email': 'contact@indonesian-embassy.tr', 'phone': '+90 312 438 2190'},
 }
 
 
 def load_all():
-    """Muat semua data dari CSV. Dipanggil sekali saat aplikasi start."""
-    User.load_from_csv()
-    Laporan.load_from_csv()
-    Pengumuman.load_from_csv()
-    Notification.load_from_csv()
+    """Inisialisasi database (buat tabel + seed dari CSV bila kosong), lalu muat
+    seluruh data ke memori. Dipanggil sekali saat aplikasi start."""
+    init_db()
+    User.load_all()
+    Laporan.load_all()
+    Pengumuman.load_all()
+    Notification.load_all()

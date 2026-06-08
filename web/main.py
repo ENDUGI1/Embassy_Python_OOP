@@ -1,11 +1,13 @@
 """
 FastAPI app — versi web dari Sistem Pengaduan & Bantuan Perlindungan PMI.
 
-Backend memakai ulang class OOP dari models.py (port dari mulaiDariAwal.py).
-Penyimpanan tetap CSV. Autentikasi memakai session cookie.
+Backend memakai ulang class OOP dari models.py (port dari versi CLI).
+Penyimpanan memakai SQLite (lihat database.py), password di-hash
+(lihat security.py), dan autentikasi memakai session cookie.
 """
 
 import io
+import os
 from pathlib import Path
 
 import qrcode
@@ -16,16 +18,21 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
 from models import User, Admin, Laporan, Pengumuman, Notification, KEDUTAAN, load_all
+from security import hash_password, is_hashed
 
 BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI(title="SIPMI — Sistem Pengaduan & Bantuan PMI")
-app.add_middleware(SessionMiddleware, secret_key="sipmi-pbo-rahasia-2024")
+# Secret key diambil dari environment saat deploy; ada default untuk lokal.
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.environ.get("SECRET_KEY", "sipmi-pbo-rahasia-2024"),
+)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
-# Pastikan admin selalu tersedia, lalu muat seluruh data dari CSV.
+# Pastikan admin selalu tersedia, lalu muat seluruh data dari database.
 Admin()
 load_all()
 
@@ -97,6 +104,10 @@ def login(request: Request, nik: str = Form(...), password: str = Form(...)):
 
     user = User.find_user(nik, password)
     if user and user.name != "admin":
+        # Upgrade otomatis: jika password lama masih plaintext, simpan sebagai hash.
+        if not is_hashed(user.password):
+            user.password = hash_password(password)
+            User.save_all()
         request.session["nik"] = user.nik
         request.session["is_admin"] = False
         flash(request, f"Selamat datang, {user.name}.")
@@ -142,9 +153,9 @@ def register(
         flash(request, "NIK, Nama, atau Passport sudah terdaftar!", "error")
         return redirect("/register")
 
-    User(name, phone, nik, passport, password, country)
+    User(name, phone, nik, passport, hash_password(password), country)
     User.remove_duplicates()
-    User.save_to_csv()
+    User.save_all()
     flash(request, "Registrasi berhasil! Silakan login.")
     return redirect("/login")
 
@@ -196,7 +207,7 @@ def laporan_create(request: Request, deskripsi: str = Form(...)):
         return redirect("/laporan")
     Laporan(deskripsi.strip(), user.name)
     Laporan.remove_duplicates()
-    Laporan.save_to_csv()
+    Laporan.save_all()
     flash(request, "Laporan berhasil dibuat!")
     return redirect("/laporan")
 
@@ -221,7 +232,7 @@ def laporan_edit(request: Request, idx: int, deskripsi: str = Form(...)):
         return redirect("/laporan")
     laporan.deskripsi = deskripsi.strip()
     Laporan.remove_duplicates()
-    Laporan.save_to_csv()
+    Laporan.save_all()
     flash(request, "Laporan berhasil diubah.")
     return redirect("/laporan")
 
@@ -243,7 +254,7 @@ def laporan_delete(request: Request, idx: int):
         return redirect("/laporan")
     Laporan.reports.remove(laporan)
     Laporan.remove_duplicates()
-    Laporan.save_to_csv()
+    Laporan.save_all()
     flash(request, "Laporan berhasil dihapus.")
     return redirect("/laporan")
 
@@ -320,7 +331,7 @@ def admin_tindaklanjuti(request: Request, idx: int):
     if 0 <= idx < len(Laporan.reports):
         Laporan.reports[idx].status = "Sudah Ditindaklanjuti"
         Laporan.remove_duplicates()
-        Laporan.save_to_csv()
+        Laporan.save_all()
         flash(request, "Laporan berhasil ditindaklanjuti.")
     else:
         flash(request, "Laporan tidak ditemukan.", "error")
@@ -344,7 +355,7 @@ def admin_pengumuman_create(request: Request, title: str = Form(...), descriptio
         return redirect("/admin/pengumuman")
     Pengumuman(title.strip(), description.strip())
     Pengumuman.remove_duplicates()
-    Pengumuman.save_to_csv()
+    Pengumuman.save_all()
     flash(request, "Pengumuman berhasil dibuat.")
     return redirect("/admin/pengumuman")
 
@@ -358,7 +369,7 @@ def admin_pengumuman_edit(request: Request, idx: int, title: str = Form(...), de
         p.title = title.strip()
         p.description = description.strip()
         Pengumuman.remove_duplicates()
-        Pengumuman.save_to_csv()
+        Pengumuman.save_all()
         flash(request, "Pengumuman berhasil diubah.")
     else:
         flash(request, "Pengumuman tidak ditemukan.", "error")
@@ -372,7 +383,7 @@ def admin_pengumuman_delete(request: Request, idx: int):
     if 0 <= idx < len(Pengumuman.announcements):
         Pengumuman.announcements.pop(idx)
         Pengumuman.remove_duplicates()
-        Pengumuman.save_to_csv()
+        Pengumuman.save_all()
         flash(request, "Pengumuman berhasil dihapus.")
     else:
         flash(request, "Pengumuman tidak ditemukan.", "error")
@@ -400,6 +411,6 @@ def admin_hubungi_send(request: Request, nama: str = Form(...), pesan: str = For
         return redirect("/admin/hubungi")
     Notification(nama, pesan.strip())
     Notification.remove_duplicates()
-    Notification.save_to_csv()
+    Notification.save_all()
     flash(request, f"Pesan berhasil dikirim ke {nama}.")
     return redirect("/admin/hubungi")
