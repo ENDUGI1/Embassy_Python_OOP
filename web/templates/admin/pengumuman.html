@@ -1,0 +1,80 @@
+{% extends "app_base.html" %}
+{% block title %}Kelola Pengumuman — SIPMI{% endblock %}
+{% block eyebrow %}Panel Admin{% endblock %}
+{% block page_title %}Kelola Pengumuman{% endblock %}
+{% block page_sub %}<p class="mt-2 text-ink-500">Buat dan kelola pengumuman untuk seluruh pengguna.</p>{% endblock %}
+
+{% block page %}
+{# Form buat pengumuman #}
+<div class="bg-white rounded-2xl border border-ink/5 p-6 shadow-card mb-6">
+    <h2 class="font-display text-lg font-bold mb-4 flex items-center gap-2">
+        <span class="h-7 w-7 rounded-lg bg-merah text-white grid place-items-center text-sm">+</span>
+        Buat Pengumuman Baru
+    </h2>
+    <form method="post" action="/admin/pengumuman/create" class="space-y-3">
+        <input name="title" required placeholder="Judul pengumuman"
+            class="w-full rounded-xl border border-ink/10 bg-cream px-4 py-3 focus:border-merah focus:ring-4 focus:ring-merah/10 outline-none transition">
+        <textarea name="description" required rows="3" placeholder="Isi pengumuman..."
+            class="w-full rounded-xl border border-ink/10 bg-cream px-4 py-3 focus:border-merah focus:ring-4 focus:ring-merah/10 outline-none transition"></textarea>
+        <div class="text-right">
+            <button class="px-6 py-3 rounded-xl bg-merah text-white font-semibold shadow-card hover:bg-merah-700 transition">Terbitkan</button>
+        </div>
+    </form>
+</div>
+
+{% if items %}
+<div class="grid md:grid-cols-2 gap-4">
+    {% for idx, p in items %}
+    <article class="bg-white rounded-2xl border border-ink/5 p-6 shadow-card relative overflow-hidden">
+        <div class="absolute top-0 left-0 h-full w-1.5 bg-merah"></div>
+        <div class="flex items-center justify-between gap-2 mb-2">
+            <span class="text-xs text-ink-500/60">{{ p.date }}</span>
+            <div class="flex items-center gap-1">
+                <button onclick="openEdit({{ idx }}, this.dataset.t, this.dataset.d)" data-t="{{ p.title }}" data-d="{{ p.description }}"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold text-ink border border-ink/10 hover:border-merah hover:text-merah transition">Ubah</button>
+                <form method="post" action="/admin/pengumuman/{{ idx }}/delete" onsubmit="return confirm('Hapus pengumuman ini?')">
+                    <button class="px-3 py-1.5 rounded-lg text-xs font-semibold text-merah hover:bg-merah-50 transition">Hapus</button>
+                </form>
+            </div>
+        </div>
+        <h2 class="font-display text-lg font-bold text-ink leading-snug">{{ p.title }}</h2>
+        <p class="mt-2 text-sm text-ink-500 leading-relaxed">{{ p.description }}</p>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-2xl border border-dashed border-ink/15 p-12 text-center">
+    <p class="font-semibold text-ink">Belum ada pengumuman</p>
+    <p class="text-sm text-ink-500 mt-1">Gunakan form di atas untuk membuat pengumuman pertama.</p>
+</div>
+{% endif %}
+
+{# Modal edit #}
+<div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-card w-full max-w-lg p-6">
+        <h3 class="font-display text-xl font-bold mb-4">Ubah Pengumuman</h3>
+        <form method="post" id="editForm" class="space-y-3">
+            <input name="title" id="editTitle" required placeholder="Judul"
+                class="w-full rounded-xl border border-ink/10 bg-cream px-4 py-3 focus:border-merah focus:ring-4 focus:ring-merah/10 outline-none transition">
+            <textarea name="description" id="editDesc" rows="4" required
+                class="w-full rounded-xl border border-ink/10 bg-cream px-4 py-3 focus:border-merah focus:ring-4 focus:ring-merah/10 outline-none transition"></textarea>
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closeEdit()" class="px-4 py-2.5 rounded-lg font-semibold text-ink hover:bg-cream transition">Batal</button>
+                <button class="px-5 py-2.5 rounded-lg bg-merah text-white font-semibold hover:bg-merah-700 transition">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('editModal');
+    function openEdit(idx, title, desc) {
+        document.getElementById('editForm').action = '/admin/pengumuman/' + idx + '/edit';
+        document.getElementById('editTitle').value = title;
+        document.getElementById('editDesc').value = desc;
+        modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+    function closeEdit() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    modal.addEventListener('click', e => { if (e.target === modal) closeEdit(); });
+</script>
+{% endblock %}

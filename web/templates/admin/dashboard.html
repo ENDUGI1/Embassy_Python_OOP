@@ -1,0 +1,73 @@
+{% extends "app_base.html" %}
+{% block title %}Dashboard Admin — SIPMI{% endblock %}
+{% block eyebrow %}Panel Admin{% endblock %}
+{% block page_title %}Dashboard Admin{% endblock %}
+{% block page_sub %}<p class="mt-2 text-ink-500">Pantau seluruh laporan dan kelola layanan PMI.</p>{% endblock %}
+
+{% block page %}
+<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    {% set stats = [
+        ('Total Laporan', total_laporan, 'bg-ink', 'M9 12h6m-6 4h6M9 8h6M5 3h14a1 1 0 011 1v16a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z'),
+        ('Belum Ditangani', belum, 'bg-merah', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'),
+        ('Sudah Ditangani', selesai, 'bg-emerald-600', 'M9 12l2 2 4-4'),
+        ('Pengguna Terdaftar', jumlah_user, 'bg-blue-600', 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z'),
+    ] %}
+    {% for label, val, color, icon in stats %}
+    <div class="bg-white rounded-2xl border border-ink/5 p-5 shadow-card">
+        <div class="flex items-center justify-between">
+            <div class="h-11 w-11 rounded-xl {{ color }} grid place-items-center text-white">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ icon }}"/></svg>
+            </div>
+            <span class="font-display text-4xl font-bold tracking-tight">{{ val }}</span>
+        </div>
+        <p class="mt-3 text-sm font-medium text-ink-500">{{ label }}</p>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-white rounded-2xl border border-ink/5 p-6 shadow-card">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="font-display text-xl font-bold">Laporan Terbaru</h2>
+            <a href="/admin/laporan" class="text-xs font-semibold text-merah hover:underline">Kelola semua →</a>
+        </div>
+        {% if recent %}
+        <div class="space-y-3">
+            {% for l in recent %}
+            <div class="flex items-start gap-3 rounded-xl border border-ink/5 p-4">
+                <span class="mt-1.5 h-2 w-2 rounded-full shrink-0 {{ 'bg-emerald-500' if l.status != 'Belum Ditindaklanjuti' else 'bg-merah' }}"></span>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-ink line-clamp-2">{{ l.deskripsi }}</p>
+                    <p class="text-[11px] text-ink-500/60 mt-1">{{ l.user }} · {{ l.status }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-ink-500 text-center py-8">Belum ada laporan masuk.</p>
+        {% endif %}
+    </div>
+
+    <div class="bg-white rounded-2xl border border-ink/5 p-6 shadow-card">
+        <h2 class="font-display text-xl font-bold mb-4">Aksi Cepat</h2>
+        <div class="space-y-3">
+            {% set links = [
+                ('/admin/laporan', 'Tindaklanjuti Laporan', belum ~ ' menunggu'),
+                ('/admin/pengumuman', 'Kelola Pengumuman', jumlah_pengumuman ~ ' pengumuman'),
+                ('/admin/hubungi', 'Kirim Pesan ke User', jumlah_user ~ ' pengguna'),
+            ] %}
+            {% for href, title, sub in links %}
+            <a href="{{ href }}" class="flex items-center gap-3 rounded-xl border border-ink/5 p-4 hover:border-merah/30 hover:bg-cream transition">
+                <div class="h-9 w-9 rounded-lg bg-merah-50 text-merah grid place-items-center shrink-0">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                </div>
+                <div class="min-w-0">
+                    <p class="font-semibold text-ink text-sm truncate">{{ title }}</p>
+                    <p class="text-xs text-ink-500/70 truncate">{{ sub }}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

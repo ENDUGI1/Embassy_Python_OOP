@@ -1,0 +1,66 @@
+{% extends "app_base.html" %}
+{% block title %}Hubungi User — SIPMI{% endblock %}
+{% block eyebrow %}Panel Admin{% endblock %}
+{% block page_title %}Hubungi User{% endblock %}
+{% block page_sub %}<p class="mt-2 text-ink-500">Kirim notifikasi atau balasan langsung ke pekerja migran.</p>{% endblock %}
+
+{% block page %}
+<div class="grid lg:grid-cols-3 gap-6">
+    {# Form kirim pesan #}
+    <div class="lg:col-span-2 order-last lg:order-first">
+        <div class="bg-white rounded-2xl border border-ink/5 p-6 shadow-card">
+            <h2 class="font-display text-lg font-bold mb-4">Tulis Pesan</h2>
+            {% if users %}
+            <form method="post" action="/admin/hubungi" class="space-y-4">
+                <label class="block">
+                    <span class="text-sm font-semibold text-ink">Tujuan</span>
+                    <select name="nama" required id="namaSelect"
+                        class="mt-1.5 w-full rounded-xl border border-ink/10 bg-cream px-4 py-3 focus:border-merah focus:ring-4 focus:ring-merah/10 outline-none transition">
+                        <option value="" disabled selected>— Pilih pengguna —</option>
+                        {% for u in users %}
+                        <option value="{{ u.name }}">{{ u.name }} ({{ u.country|title }})</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="text-sm font-semibold text-ink">Pesan</span>
+                    <textarea name="pesan" rows="5" required placeholder="Tuliskan pesan untuk pengguna..."
+                        class="mt-1.5 w-full rounded-xl border border-ink/10 bg-cream px-4 py-3 focus:border-merah focus:ring-4 focus:ring-merah/10 outline-none transition"></textarea>
+                </label>
+                <div class="text-right">
+                    <button class="px-6 py-3 rounded-xl bg-merah text-white font-semibold shadow-card hover:bg-merah-700 transition">Kirim Pesan</button>
+                </div>
+            </form>
+            {% else %}
+            <p class="text-sm text-ink-500 py-6 text-center">Belum ada pengguna terdaftar.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Daftar user #}
+    <div class="bg-white rounded-2xl border border-ink/5 p-6 shadow-card">
+        <h2 class="font-display text-lg font-bold mb-4">Daftar Pengguna <span class="text-ink-500/60 text-sm font-normal">({{ users|length }})</span></h2>
+        <div class="space-y-2 max-h-96 overflow-y-auto">
+            {% for u in users %}
+            <button type="button" onclick="pick('{{ u.name }}')"
+                class="w-full flex items-center gap-3 rounded-xl border border-ink/5 p-3 hover:border-merah/30 hover:bg-cream transition text-left">
+                <div class="h-9 w-9 rounded-full bg-ink text-white grid place-items-center text-sm font-semibold shrink-0">{{ u.name[0]|upper }}</div>
+                <div class="min-w-0">
+                    <p class="font-semibold text-ink text-sm truncate">{{ u.name }}</p>
+                    <p class="text-xs text-ink-500/70 truncate">{{ u.country|title }}</p>
+                </div>
+            </button>
+            {% else %}
+            <p class="text-sm text-ink-500 text-center py-4">Tidak ada pengguna.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function pick(nama) {
+        const sel = document.getElementById('namaSelect');
+        if (sel) { sel.value = nama; sel.focus(); }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "app_base.html" %}
+{% block title %}Pengumuman — SIPMI{% endblock %}
+{% block eyebrow %}Informasi Resmi{% endblock %}
+{% block page_title %}Pengumuman{% endblock %}
+{% block page_sub %}<p class="mt-2 text-ink-500">Informasi dan imbauan terbaru dari kedutaan.</p>{% endblock %}
+
+{% block page %}
+{% if announcements %}
+<div class="grid md:grid-cols-2 gap-4">
+    {% for p in announcements %}
+    <article class="bg-white rounded-2xl border border-ink/5 p-6 shadow-card relative overflow-hidden">
+        <div class="absolute top-0 left-0 h-full w-1.5 bg-merah"></div>
+        <div class="flex items-center gap-2 text-xs text-ink-500/60 mb-3">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            {{ p.date }}
+        </div>
+        <h2 class="font-display text-lg font-bold text-ink leading-snug">{{ p.title }}</h2>
+        <p class="mt-2 text-sm text-ink-500 leading-relaxed">{{ p.description }}</p>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-2xl border border-dashed border-ink/15 p-12 text-center">
+    <p class="font-semibold text-ink">Belum ada pengumuman</p>
+    <p class="text-sm text-ink-500 mt-1">Informasi terbaru akan ditampilkan di sini.</p>
+</div>
+{% endif %}
+{% endblock %}

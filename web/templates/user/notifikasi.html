@@ -1,0 +1,32 @@
+{% extends "app_base.html" %}
+{% block title %}Notifikasi — SIPMI{% endblock %}
+{% block eyebrow %}Pesan Masuk{% endblock %}
+{% block page_title %}Notifikasi{% endblock %}
+{% block page_sub %}<p class="mt-2 text-ink-500">Balasan dan arahan resmi dari petugas kedutaan.</p>{% endblock %}
+
+{% block page %}
+{% if notif %}
+<div class="space-y-3">
+    {% for n in notif %}
+    <div class="bg-white rounded-2xl border border-ink/5 p-5 shadow-card flex gap-4">
+        <div class="h-11 w-11 rounded-xl bg-ink text-white grid place-items-center shrink-0 text-xs font-bold">KBRI</div>
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+                <p class="font-semibold text-ink">Petugas Kedutaan</p>
+                <span class="text-xs text-ink-500/60 shrink-0">{{ n.timestamp }}</span>
+            </div>
+            <p class="mt-1 text-ink-500 leading-relaxed">{{ n.message }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-2xl border border-dashed border-ink/15 p-12 text-center">
+    <div class="h-14 w-14 rounded-2xl bg-amber-50 text-amber-500 grid place-items-center mx-auto mb-4">
+        <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1"/></svg>
+    </div>
+    <p class="font-semibold text-ink">Belum ada notifikasi</p>
+    <p class="text-sm text-ink-500 mt-1">Balasan dari kedutaan akan muncul di sini.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "app_base.html" %}
+{% block title %}Laporan Saya — SIPMI{% endblock %}
+{% block eyebrow %}Manajemen Laporan{% endblock %}
+{% block page_title %}Laporan Saya{% endblock %}
+{% block page_sub %}<p class="mt-2 text-ink-500">Buat pengaduan baru atau kelola laporan yang sudah ada.</p>{% endblock %}
+
+{% block page %}
+{# Form buat laporan #}
+<div class="bg-white rounded-2xl border border-ink/5 p-6 shadow-card mb-6">
+    <h2 class="font-display text-lg font-bold mb-4 flex items-center gap-2">
+        <span class="h-7 w-7 rounded-lg bg-merah text-white grid place-items-center text-sm">+</span>
+        Buat Laporan Baru
+    </h2>
+    <form method="post" action="/laporan/create" class="flex flex-col sm:flex-row gap-3">
+        <input name="deskripsi" required placeholder="Tuliskan masalah yang Anda alami..."
+            class="flex-1 rounded-xl border border-ink/10 bg-cream px-4 py-3 focus:border-merah focus:ring-4 focus:ring-merah/10 outline-none transition">
+        <button class="px-6 py-3 rounded-xl bg-merah text-white font-semibold shadow-card hover:bg-merah-700 transition whitespace-nowrap">Kirim Laporan</button>
+    </form>
+</div>
+
+{# Daftar laporan #}
+{% if items %}
+<div class="space-y-3">
+    {% for idx, l in items %}
+    <div class="bg-white rounded-2xl border border-ink/5 p-5 shadow-card flex flex-col sm:flex-row sm:items-center gap-4">
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1.5">
+                {% if l.status == 'Belum Ditindaklanjuti' %}
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-merah-50 text-merah-700">● Belum Ditindaklanjuti</span>
+                {% else %}
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">✓ Sudah Ditindaklanjuti</span>
+                {% endif %}
+            </div>
+            <p class="text-ink leading-relaxed">{{ l.deskripsi }}</p>
+        </div>
+        {% if l.status == 'Belum Ditindaklanjuti' %}
+        <div class="flex items-center gap-2 shrink-0">
+            <button onclick="openEdit({{ idx }}, this.dataset.desc)" data-desc="{{ l.deskripsi }}"
+                class="px-4 py-2 rounded-lg text-sm font-semibold text-ink border border-ink/10 hover:border-merah hover:text-merah transition">Ubah</button>
+            <form method="post" action="/laporan/{{ idx }}/delete" onsubmit="return confirm('Hapus laporan ini?')">
+                <button class="px-4 py-2 rounded-lg text-sm font-semibold text-merah hover:bg-merah-50 transition">Hapus</button>
+            </form>
+        </div>
+        {% else %}
+        <span class="text-xs text-ink-500/60 shrink-0">Terkunci</span>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-2xl border border-dashed border-ink/15 p-12 text-center">
+    <div class="h-14 w-14 rounded-2xl bg-merah-50 text-merah grid place-items-center mx-auto mb-4">
+        <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M9 8h6M5 3h14a1 1 0 011 1v16a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>
+    </div>
+    <p class="font-semibold text-ink">Anda belum memiliki laporan</p>
+    <p class="text-sm text-ink-500 mt-1">Gunakan form di atas untuk membuat laporan pertama Anda.</p>
+</div>
+{% endif %}
+
+{# Modal edit #}
+<div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-card w-full max-w-lg p-6">
+        <h3 class="font-display text-xl font-bold mb-4">Ubah Laporan</h3>
+        <form method="post" id="editForm">
+            <textarea name="deskripsi" id="editDesc" rows="4" required
+                class="w-full rounded-xl border border-ink/10 bg-cream px-4 py-3 focus:border-merah focus:ring-4 focus:ring-merah/10 outline-none transition"></textarea>
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" onclick="closeEdit()" class="px-4 py-2.5 rounded-lg font-semibold text-ink hover:bg-cream transition">Batal</button>
+                <button class="px-5 py-2.5 rounded-lg bg-merah text-white font-semibold hover:bg-merah-700 transition">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('editModal');
+    function openEdit(idx, desc) {
+        document.getElementById('editForm').action = '/laporan/' + idx + '/edit';
+        document.getElementById('editDesc').value = desc;
+        modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+    function closeEdit() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    modal.addEventListener('click', e => { if (e.target === modal) closeEdit(); });
+</script>
+{% endblock %}

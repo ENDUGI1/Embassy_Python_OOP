@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block shell %}
+<header class="absolute inset-x-0 top-0 z-20">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 h-20 flex items-center justify-between">
+        <a href="/" class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-merah grid place-items-center font-display font-bold text-white text-lg shadow-lg">S</div>
+            <div class="leading-none">
+                <p class="font-display font-bold text-xl tracking-tight text-ink">SIPMI</p>
+                <p class="text-[11px] text-ink-500/70 mt-1">Perlindungan PMI</p>
+            </div>
+        </a>
+        <div class="flex items-center gap-2 sm:gap-3">
+            <a href="/login" class="px-4 py-2 text-sm font-semibold text-ink hover:text-merah transition">Masuk</a>
+            <a href="/register" class="px-4 py-2 text-sm font-semibold rounded-full bg-ink text-white hover:bg-merah transition shadow-card">Daftar</a>
+        </div>
+    </div>
+</header>
+
+<section class="relative overflow-hidden">
+    <div class="absolute inset-0 batik-line opacity-60"></div>
+    <div class="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-merah/10 blur-3xl"></div>
+    <div class="absolute top-40 -left-20 h-72 w-72 rounded-full bg-gold/10 blur-3xl"></div>
+
+    <div class="relative max-w-6xl mx-auto px-5 sm:px-8 pt-32 pb-20 grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+            <div class="inline-flex items-center gap-2 rounded-full border border-merah/20 bg-merah-50 px-4 py-1.5 text-xs font-semibold text-merah-700 mb-6">
+                <span class="h-1.5 w-1.5 rounded-full bg-merah animate-pulse"></span>
+                Layanan Resmi untuk Pekerja Migran Indonesia
+            </div>
+            <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tight text-ink">
+                Suara Anda<br><span class="text-merah">didengar</span>, di mana pun Anda berada.
+            </h1>
+            <p class="mt-6 text-lg text-ink-500 leading-relaxed max-w-md">
+                Laporkan masalah, terima bantuan, dan terhubung langsung dengan perwakilan kedutaan Indonesia di negara tempat Anda bekerja.
+            </p>
+            <div class="mt-8 flex flex-wrap gap-3">
+                <a href="/register" class="px-6 py-3.5 rounded-full bg-merah text-white font-semibold shadow-card hover:bg-merah-700 transition inline-flex items-center gap-2">
+                    Buat Laporan Sekarang
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                </a>
+                <a href="/login" class="px-6 py-3.5 rounded-full bg-white border border-ink/10 text-ink font-semibold hover:border-merah hover:text-merah transition">
+                    Sudah punya akun
+                </a>
+            </div>
+        </div>
+
+        <div class="relative">
+            <div class="relative bg-white rounded-3xl shadow-card border border-ink/5 p-7">
+                <div class="flex items-center gap-3 pb-5 border-b border-ink/5">
+                    <div class="h-11 w-11 rounded-xl bg-merah-50 grid place-items-center text-merah">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M9 8h6M5 3h14a1 1 0 011 1v16a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-ink">Laporan #2024</p>
+                        <p class="text-xs text-ink-500/70">Status pengaduan Anda</p>
+                    </div>
+                    <span class="ml-auto text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700">Ditindaklanjuti</span>
+                </div>
+                <p class="mt-5 text-sm text-ink-500 leading-relaxed">"Dokumen penting saya bermasalah saat ingin kembali ke Indonesia. Mohon bantuannya."</p>
+                <div class="mt-5 flex items-center gap-3 rounded-xl bg-cream p-4">
+                    <div class="h-9 w-9 rounded-full bg-ink grid place-items-center text-white text-xs font-bold">KBRI</div>
+                    <p class="text-xs text-ink-500"><span class="font-semibold text-ink">Kedutaan:</span> Tim kami sedang menangani kasus Anda. Harap bersabar.</p>
+                </div>
+            </div>
+            <div class="absolute -bottom-5 -left-5 bg-ink text-white rounded-2xl px-5 py-4 shadow-card hidden sm:block">
+                <p class="font-display text-2xl font-bold">{{ jumlah_negara }}</p>
+                <p class="text-[11px] text-white/60">Negara terjangkau</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-5 sm:px-8 pb-24">
+    <div class="grid sm:grid-cols-3 gap-5">
+        {% set feats = [
+            ('Pengaduan Cepat', 'Buat, ubah, dan pantau status laporan Anda kapan saja tanpa antre.', 'M9 12h6m-6 4h6M9 8h6M5 3h14a1 1 0 011 1v16a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z'),
+            ('Notifikasi Langsung', 'Terima balasan dan arahan resmi dari petugas kedutaan secara real-time.', 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5'),
+            ('Kontak Kedutaan', 'Akses alamat, email, dan nomor telepon kedutaan sesuai negara Anda.', 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11 11 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'),
+        ] %}
+        {% for title, desc, icon in feats %}
+        <div class="group bg-white rounded-2xl border border-ink/5 p-6 shadow-card hover:-translate-y-1 transition">
+            <div class="h-12 w-12 rounded-xl bg-merah-50 grid place-items-center text-merah mb-4 group-hover:bg-merah group-hover:text-white transition">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ icon }}"/></svg>
+            </div>
+            <h3 class="font-display font-bold text-lg text-ink">{{ title }}</h3>
+            <p class="mt-2 text-sm text-ink-500 leading-relaxed">{{ desc }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<footer class="border-t border-ink/5 bg-white">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-ink-500/70">
+        <p>&copy; 2024 SIPMI &middot; Tugas Pemrograman Berorientasi Objek</p>
+        <p>Sistem Pengaduan & Bantuan Perlindungan PMI</p>
+    </div>
+</footer>
+{% endblock %}

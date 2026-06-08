@@ -1,0 +1,55 @@
+{% extends "app_base.html" %}
+{% block title %}Kelola Laporan — SIPMI{% endblock %}
+{% block eyebrow %}Panel Admin{% endblock %}
+{% block page_title %}Kelola Laporan{% endblock %}
+{% block page_sub %}<p class="mt-2 text-ink-500">Seluruh laporan dari pekerja migran. Tindaklanjuti yang masih menunggu.</p>{% endblock %}
+
+{% block page %}
+{% if items %}
+<div class="bg-white rounded-2xl border border-ink/5 shadow-card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-cream text-ink-500 text-left text-xs uppercase tracking-wider">
+                    <th class="px-5 py-3 font-semibold">No</th>
+                    <th class="px-5 py-3 font-semibold">Deskripsi</th>
+                    <th class="px-5 py-3 font-semibold">Pelapor</th>
+                    <th class="px-5 py-3 font-semibold">Status</th>
+                    <th class="px-5 py-3 font-semibold text-right">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-ink/5">
+                {% for idx, l in items %}
+                <tr class="hover:bg-cream/50 transition">
+                    <td class="px-5 py-4 text-ink-500/70 font-medium">{{ loop.index }}</td>
+                    <td class="px-5 py-4 max-w-md"><p class="text-ink leading-relaxed">{{ l.deskripsi }}</p></td>
+                    <td class="px-5 py-4 whitespace-nowrap font-medium text-ink">{{ l.user }}</td>
+                    <td class="px-5 py-4 whitespace-nowrap">
+                        {% if l.status == 'Belum Ditindaklanjuti' %}
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-merah-50 text-merah-700">● Belum</span>
+                        {% else %}
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">✓ Selesai</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-4 text-right whitespace-nowrap">
+                        {% if l.status == 'Belum Ditindaklanjuti' %}
+                        <form method="post" action="/admin/laporan/{{ idx }}/tindaklanjuti">
+                            <button class="px-4 py-2 rounded-lg text-xs font-semibold bg-ink text-white hover:bg-merah transition">Tindaklanjuti</button>
+                        </form>
+                        {% else %}
+                        <span class="text-xs text-ink-500/50">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="bg-white rounded-2xl border border-dashed border-ink/15 p-12 text-center">
+    <p class="font-semibold text-ink">Belum ada laporan</p>
+    <p class="text-sm text-ink-500 mt-1">Laporan dari pekerja migran akan tampil di sini.</p>
+</div>
+{% endif %}
+{% endblock %}

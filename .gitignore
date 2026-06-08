@@ -1,1 +1,5 @@
 coba/
+__pycache__/
+*.pyc
+.agents/
+.claude/
